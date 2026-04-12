@@ -10,13 +10,9 @@ export default function FeaturesSection() {
   return (
     <section
       id="features"
-      style={{ position: "relative", zIndex: 1, padding: "0 64px", maxWidth: "1200px", margin: "0 auto" }}
+      style={{ position: "relative", zIndex: 1, padding: "0 clamp(20px, 5vw, 64px)", maxWidth: "1200px", margin: "0 auto" }}
     >
       <style>{`
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
         .feat-card {
           border-radius: 24px;
           position: relative;
@@ -41,41 +37,85 @@ export default function FeaturesSection() {
           transform: translateY(-4px);
           box-shadow: 0 0 40px var(--em-glow);
         }
-        .feat-card-glass:hover {
-          border-color: var(--border-strong);
+        .feat-card-glass:hover { border-color: var(--border-strong); }
+        .feat-card-video:hover { border-color: rgba(16,185,129,0.40); }
+
+        /* Bento grid */
+        .feat-bento {
+          display: grid;
+          grid-template-columns: 3fr 2fr;
+          gap: 20px;
         }
-        .feat-card-video:hover {
-          border-color: rgba(16,185,129,0.40);
+        .feat-bento-right {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        /* Tablet: stack to single column */
+        @media (max-width: 768px) {
+          .feat-bento {
+            grid-template-columns: 1fr;
+          }
+          .feat-bento-right {
+            flex-direction: row;
+          }
+          .feat-bento-right > * {
+            flex: 1;
+          }
+        }
+
+        /* Mobile: all single column */
+        @media (max-width: 540px) {
+          .feat-bento-right {
+            flex-direction: column;
+          }
+          .feat-card-tall {
+            min-height: 380px !important;
+          }
+          .feat-card-short {
+            min-height: 200px !important;
+          }
+        }
+
+        /* Header responsive */
+        .feat-header {
+          text-align: center;
+          margin-bottom: 72px;
+        }
+        @media (max-width: 540px) {
+          .feat-header { margin-bottom: 48px; }
         }
       `}</style>
 
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "72px" }}>
+      <div className="feat-header">
         <div className="section-label" style={{ margin: "0 auto 24px" }}>
           <span className="blink" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--em)" }} />
           Fitur Platform
         </div>
         <h2 style={{
           fontFamily: "'Syne', sans-serif",
-          fontSize: "clamp(40px, 5vw, 64px)",
-          fontWeight: 800, lineHeight: 1.05, letterSpacing: "-2.5px",
+          fontSize: "clamp(32px, 5vw, 64px)",
+          fontWeight: 800, lineHeight: 1.05, letterSpacing: "-2px",
           color: "var(--tp)", marginBottom: "20px",
         }}>
           Satu Platform.<br />
           <span className="grad-text">Semua Perlindungan.</span>
         </h2>
         <p style={{
-          fontSize: "17px", fontWeight: 300, color: "var(--ts)",
+          fontSize: "clamp(14px, 1.6vw, 17px)", fontWeight: 300, color: "var(--ts)",
           lineHeight: 1.65, maxWidth: "520px", margin: "0 auto",
+          padding: "0 8px",
         }}>
           Fradara menggabungkan deteksi fraud expense dan procurement dalam satu dashboard terpusat — tanpa tools enterprise yang mahal.
         </p>
       </div>
 
       {/* Bento grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "20px" }}>
+      <div className="feat-bento">
         <FeatureCard feat={features[0]} tall isDark={isDark} />
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div className="feat-bento-right">
           <FeatureCard feat={features[1]} isDark={isDark} />
           <FeatureCard feat={features[2]} isDark={isDark} />
         </div>
@@ -89,10 +129,9 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
 
   return (
     <div
-      className={`feat-card ${hasVideo ? "feat-card-video" : "feat-card-glass"}`}
+      className={`feat-card ${hasVideo ? "feat-card-video" : "feat-card-glass"} ${tall ? "feat-card-tall" : "feat-card-short"}`}
       style={{ minHeight: tall ? "480px" : "220px" }}
     >
-
       {/* Video BG */}
       {hasVideo && (
         <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
@@ -101,8 +140,6 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
           >
             <source src={(feat as Feature & { video: string }).video} type="video/mp4" />
           </video>
-
-          {/* Scrim — lighter in light mode, darker in dark mode */}
           <div style={{
             position: "absolute", inset: 0,
             background: isDark
@@ -113,7 +150,7 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
         </div>
       )}
 
-      {/* Radial glow (glass cards only) */}
+      {/* Radial glow */}
       {!hasVideo && (
         <div style={{
           position: "absolute", inset: 0,
@@ -122,7 +159,7 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
         }} />
       )}
 
-      {/* Top shimmer line */}
+      {/* Top shimmer */}
       <div style={{
         position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)",
         width: "60%", height: "1px",
@@ -143,7 +180,7 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
       {/* Content */}
       <div style={{
         position: "relative", zIndex: 2,
-        padding: tall ? "40px 40px 44px" : "28px 32px 32px",
+        padding: tall ? "clamp(24px, 3vw, 40px) clamp(20px, 3vw, 40px) clamp(28px, 3vw, 44px)" : "clamp(20px, 2.5vw, 28px) clamp(20px, 2.5vw, 32px) clamp(24px, 2.5vw, 32px)",
         ...(hasVideo ? {
           background: "linear-gradient(to top, rgba(4,12,8,0.92) 0%, rgba(4,12,8,0.60) 50%, transparent 100%)",
           backdropFilter: "blur(2px)",
@@ -151,35 +188,27 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
         } : {}),
       }}>
 
-        {/* Icon circle */}
+        {/* Icon */}
         <div style={{
           width: "52px", height: "52px", borderRadius: "50%",
           border: "1px solid var(--border-strong)",
-          background: hasVideo
-            ? "rgba(10,30,20,0.50)"
-            : "var(--surface-2)",
+          background: hasVideo ? "rgba(10,30,20,0.50)" : "var(--surface-2)",
           display: "flex", alignItems: "center", justifyContent: "center",
           position: "relative", marginBottom: "24px",
           backdropFilter: hasVideo ? "blur(8px)" : "none",
           WebkitBackdropFilter: hasVideo ? "blur(8px)" : "none",
         }}>
-          <div style={{
-            position: "absolute", inset: "-5px", borderRadius: "50%",
-            border: "1px solid var(--border)", opacity: 0.4,
-          }} />
+          <div style={{ position: "absolute", inset: "-5px", borderRadius: "50%", border: "1px solid var(--border)", opacity: 0.4 }} />
           {feat.icon}
         </div>
 
-        <p style={{
-          fontSize: "10px", fontWeight: 600, color: "var(--em)",
-          textTransform: "uppercase", letterSpacing: "1.4px", marginBottom: "8px",
-        }}>
+        <p style={{ fontSize: "10px", fontWeight: 600, color: "var(--em)", textTransform: "uppercase", letterSpacing: "1.4px", marginBottom: "8px" }}>
           {feat.tag}
         </p>
 
         <h3 style={{
           fontFamily: "'Syne', sans-serif",
-          fontSize: tall ? "28px" : "19px",
+          fontSize: tall ? "clamp(20px, 2.5vw, 28px)" : "clamp(16px, 2vw, 19px)",
           fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.5px",
           color: hasVideo ? "#e8f5ee" : "var(--tp)",
           marginBottom: "12px",
@@ -188,7 +217,7 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
         </h3>
 
         <p style={{
-          fontSize: "14px", fontWeight: 300,
+          fontSize: "clamp(13px, 1.4vw, 14px)", fontWeight: 300,
           color: hasVideo ? "rgba(232,245,238,0.72)" : "var(--ts)",
           lineHeight: 1.65, marginBottom: "28px",
         }}>
@@ -205,19 +234,13 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
         }} />
 
         {/* Stats */}
-        <div style={{ display: "flex", gap: "32px", marginBottom: "20px" }}>
+        <div style={{ display: "flex", gap: "clamp(16px, 2.5vw, 32px)", marginBottom: "20px", flexWrap: "wrap" }}>
           {feat.stats.map((s) => (
             <div key={s.lbl}>
-              <div style={{
-                fontFamily: "'Syne', sans-serif", fontSize: "22px",
-                fontWeight: 700, color: "var(--em)", lineHeight: 1,
-              }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "22px", fontWeight: 700, color: "var(--em)", lineHeight: 1 }}>
                 {s.val}
               </div>
-              <div style={{
-                fontSize: "11px", marginTop: "4px",
-                color: hasVideo ? "rgba(232,245,238,0.50)" : "var(--tm)",
-              }}>
+              <div style={{ fontSize: "11px", marginTop: "4px", color: hasVideo ? "rgba(232,245,238,0.50)" : "var(--tm)" }}>
                 {s.lbl}
               </div>
             </div>
@@ -229,8 +252,7 @@ function FeatureCard({ feat, tall, isDark }: { feat: Feature; tall?: boolean; is
           {feat.tags.map((t) => (
             <span key={t} style={{
               padding: "4px 12px", borderRadius: "100px",
-              background: "var(--em-subtle)",
-              border: "1px solid var(--border)",
+              background: "var(--em-subtle)", border: "1px solid var(--border)",
               fontSize: "11px",
               color: hasVideo ? "rgba(232,245,238,0.65)" : "var(--ts)",
               fontWeight: 400,

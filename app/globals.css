@@ -59,6 +59,26 @@
 
   --section-label-bg: rgba(10, 107, 71, 0.08);
   --section-label-c:  #0a6b47;
+
+  /* ── FOOTER VARIABLES ── */
+  --em-deep:           #059669;
+  --footer-text:       rgba(232,245,238,0.40);
+  --footer-text-em:    rgba(232,245,238,0.60);
+  --footer-text-link:  rgba(232,245,238,0.38);
+  --footer-text-dim:   rgba(232,245,238,0.22);
+  --footer-text-label: rgba(232,245,238,0.60);
+  --footer-em-border:  rgba(16,185,129,0.25);
+  --footer-em-bg:      rgba(16,185,129,0.06);
+  --footer-em-input-b: rgba(16,185,129,0.18);
+  --footer-divider:    rgba(16,185,129,0.08);
+
+  /* ── NAVBAR VARIABLES ── */
+  --nav-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 0 0 1px var(--border);
+  --em-glow-btn: 0 4px 18px rgba(16,185,129,0.30);
+  --em-glow-btn-hover: 0 8px 28px rgba(16,185,129,0.45);
+
+  /* ── Features VARIABLES ── */
+  --feat-card-hover-shadow: 0 0 40px var(--em-glow);
 }
 
 [data-theme="dark"] {
@@ -118,6 +138,26 @@
 
   --section-label-bg: rgba(16, 185, 129, 0.08);
   --section-label-c:  #10b981;
+
+  /* ── FOOTER VARIABLES ── */
+  --em-deep:           #047857;
+  --footer-text:       rgba(232,245,238,0.40);
+  --footer-text-em:    rgba(232,245,238,0.60);
+  --footer-text-link:  rgba(232,245,238,0.38);
+  --footer-text-dim:   rgba(232,245,238,0.22);
+  --footer-text-label: rgba(232,245,238,0.60);
+  --footer-em-border:  rgba(16,185,129,0.20);
+  --footer-em-bg:      rgba(16,185,129,0.05);
+  --footer-em-input-b: rgba(16,185,129,0.15);
+  --footer-divider:    rgba(16,185,129,0.06);
+
+  /* ── NAVBAR VARIABLES ── */
+  --nav-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 0 1px var(--border);
+  --em-glow-btn: 0 4px 18px rgba(16,185,129,0.30);
+  --em-glow-btn-hover: 0 8px 28px rgba(16,185,129,0.45);
+
+  /* ── Features VARIABLES ── */
+  --feat-card-hover-shadow: 0 0 40px var(--em-glow);
 }
 
 @theme {

@@ -27,101 +27,136 @@ export default function Navbar() {
   });
 
   return (
-    <nav style={{
-      position: "fixed", top: "20px", left: 0, right: 0, zIndex: 200,
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 32px",
-      pointerEvents: "none",
-    }}>
+    <>
+      <style>{`
+        .navbar-root {
+          position: fixed;
+          top: 16px;
+          left: 0; right: 0;
+          z-index: 200;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 clamp(12px, 4vw, 32px);
+          pointer-events: none;
+          /* prevent overflow on small screens */
+          max-width: 100vw;
+          box-sizing: border-box;
+        }
 
-      {/* Logo */}
-      <div style={{ ...islandStyle(scrolled), padding: "8px 16px 8px 10px", gap: "10px" }}>
-        <Link
-          href="/"
-          style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "17px",
-            color: "var(--tp)", textDecoration: "none", letterSpacing: "-0.4px",
-          }}
+        /* Hide "Mulai Gratis" text on very small screens, keep icon arrow */
+        @media (max-width: 360px) {
+          .nav-cta-text { display: none; }
+          .nav-cta { padding: 9px 12px !important; }
+        }
+
+        /* Tighten logo on small screens */
+        @media (max-width: 400px) {
+          .nav-logo-text { font-size: 15px !important; }
+          .nav-logo-wrap { padding: 8px 12px 8px 8px !important; gap: 8px !important; }
+          .nav-right { padding: 6px !important; gap: 8px !important; }
+        }
+      `}</style>
+
+      <nav className="navbar-root">
+
+        {/* Logo */}
+        <div
+          className="nav-logo-wrap"
+          style={{ ...islandStyle(scrolled), padding: "8px 16px 8px 10px", gap: "10px" }}
         >
-          <div style={{
-            width: "28px", height: "28px", borderRadius: "7px",
-            background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-            boxShadow: "0 0 14px rgba(16,185,129,0.35)",
-          }}>
-            <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-              <circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.4" opacity="0.4"/>
-              <path d="M6 10.5l3 3L14.5 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <Link
+            href="/"
+            style={{
+              display: "flex", alignItems: "center", gap: "8px",
+              fontFamily: "'Syne', sans-serif", fontWeight: 800,
+              fontSize: "17px",
+              color: "var(--tp)", textDecoration: "none", letterSpacing: "-0.4px",
+            }}
+          >
+            <div style={{
+              width: "28px", height: "28px", borderRadius: "7px",
+              background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+              boxShadow: "0 0 14px rgba(16,185,129,0.35)",
+            }}>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.4" opacity="0.4"/>
+                <path d="M6 10.5l3 3L14.5 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="nav-logo-text" style={{ fontSize: "17px" }}>Fradara</span>
+          </Link>
+        </div>
+
+        {/* Theme Toggle + CTA */}
+        <div
+          className="nav-right"
+          style={{ ...islandStyle(scrolled), padding: "8px", gap: "8px" }}
+        >
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            aria-label="Toggle theme"
+            style={{
+              width: "34px", height: "34px", borderRadius: "50%",
+              border: "1px solid var(--border)",
+              background: "transparent",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0, cursor: "pointer",
+              color: "var(--ts)",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--em)";
+              (e.currentTarget as HTMLElement).style.color = "var(--em)";
+              (e.currentTarget as HTMLElement).style.background = "var(--em-subtle)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+              (e.currentTarget as HTMLElement).style.color = "var(--ts)";
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+            }}
+          >
+            {theme === "dark"
+              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+            }
+          </button>
+
+          {/* CTA */}
+          <Link
+            href="/login"
+            className="nav-cta"
+            style={{
+              padding: "9px 18px", borderRadius: "100px",
+              background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)",
+              color: "#fff", fontSize: "13px", fontWeight: 500,
+              textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "5px",
+              boxShadow: "var(--em-glow-btn)",
+              transition: "all 0.25s",
+              fontFamily: "'DM Sans', sans-serif",
+              letterSpacing: "0.1px", flexShrink: 0,
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "var(--em-glow-btn-hover)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "var(--em-glow-btn)";
+            }}
+          >
+            <span className="nav-cta-text">Mulai Gratis</span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </div>
-          Fradara
-        </Link>
-      </div>
+          </Link>
 
-      {/* Theme Toggle + CTA */}
-      <div style={{ ...islandStyle(scrolled), padding: "8px", gap: "12px" }}>
-
-        {/* Theme toggle */}
-        <button
-          onClick={toggle}
-          aria-label="Toggle theme"
-          style={{
-            width: "34px", height: "34px", borderRadius: "50%",
-            border: "1px solid var(--border)",
-            background: "transparent",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, cursor: "pointer",
-            color: "var(--ts)",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--em)";
-            (e.currentTarget as HTMLElement).style.color = "var(--em)";
-            (e.currentTarget as HTMLElement).style.background = "var(--em-subtle)";
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-            (e.currentTarget as HTMLElement).style.color = "var(--ts)";
-            (e.currentTarget as HTMLElement).style.background = "transparent";
-          }}
-        >
-          {theme === "dark"
-            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
-          }
-        </button>
-
-        {/* CTA */}
-        <Link
-          href="/login"
-          style={{
-            padding: "9px 20px", borderRadius: "100px",
-            background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)",
-            color: "#fff", fontSize: "13px", fontWeight: 500,
-            textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "5px",
-            boxShadow: "var(--em-glow-btn)",
-            transition: "all 0.25s",
-            fontFamily: "'DM Sans', sans-serif",
-            letterSpacing: "0.1px", flexShrink: 0,
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
-            (e.currentTarget as HTMLElement).style.boxShadow = "var(--em-glow-btn-hover)";
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-            (e.currentTarget as HTMLElement).style.boxShadow = "var(--em-glow-btn)";
-          }}
-        >
-          Mulai Gratis
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-            <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </Link>
-
-      </div>
-    </nav>
+        </div>
+      </nav>
+    </>
   );
 }

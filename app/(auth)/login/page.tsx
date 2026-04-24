@@ -1,19 +1,49 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/ui/ThemeProvider";
+import { api } from "@/lib/api";
+import { setTokens, setUser as saveUser, AuthUser } from "@/lib/auth";
 
 export default function LoginPage() {
   const { theme, toggle } = useTheme();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setApiError("");
     setLoading(true);
-    // TODO: auth logic
-    setTimeout(() => setLoading(false), 1500);
+    try {
+      const res = await api.post<{
+        data: {
+          accessToken: string;
+          refreshToken: string;
+          user: AuthUser;
+        };
+      }>(
+        "/auth/login",
+        { email, password },
+        { skipAuth: true }
+      );
+
+      setTokens({
+        accessToken: res.data.accessToken,
+        refreshToken: res.data.refreshToken,
+      });
+
+      saveUser(res.data.user);
+
+      router.push("/dashboard");
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Login gagal. Periksa email dan password kamu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -329,6 +359,26 @@ export default function LoginPage() {
                   required
                 />
               </div>
+
+              {apiError && (
+                <div style={{
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  background: "rgba(239,68,68,0.06)",
+                  border: "1px solid rgba(239,68,68,0.2)",
+                  display: "flex",
+                  gap: "8px",
+                  alignItems: "flex-start",
+                }}>
+                  <svg style={{ flexShrink: 0, marginTop: "1px" }} width="13" height="13" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="8" stroke="#ef4444" strokeWidth="1.5"/>
+                    <path d="M10 6v5M10 13v.5" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round"/>
+                  </svg>
+                  <p style={{ fontSize: "11px", color: "#ef4444", lineHeight: 1.5, margin: 0 }}>
+                    {apiError}
+                  </p>
+                </div>
+              )}
 
               <button
                 type="submit"

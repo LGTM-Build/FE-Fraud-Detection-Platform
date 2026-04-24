@@ -188,7 +188,7 @@ export default function RegisterPage() {
       top: calc(100% + 6px);
       left: 0;
       right: 0;
-      background: var(--surface-2, var(--card-bg, #0f1f14));
+      background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 10px;
       z-index: 100;

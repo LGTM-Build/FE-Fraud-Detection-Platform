@@ -1,16 +1,23 @@
 "use client";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 import { mockData, FilterStatus, ProcurementTransaction } from "@/data/procurement";
 import { PageHeader } from "@/components/dashboard/procurement/PageHeader";
 import { StatusFilterTabs } from "@/components/dashboard/procurement/StatusFilterTabs";
 import { ProcurementTable } from "@/components/dashboard/procurement/ProcurementTable";
-import { DetailDrawer } from "@/components/dashboard/procurement/DetailDrawer";
+import { DetailModal } from "@/components/dashboard/procurement/DetailDrawer";
 
 export default function ProcurementMonitorPage() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [filterBU, setFilterBU] = useState("all");
   const [selectedTx, setSelectedTx] = useState<ProcurementTransaction | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const businessUnits = ["all", ...Array.from(new Set(mockData.map((t) => t.businessUnit)))];
 
@@ -22,9 +29,8 @@ export default function ProcurementMonitorPage() {
 
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-        <PageHeader />
-
+      <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "16px" : "24px" }}>
+        <PageHeader isMobile={isMobile} />
         <StatusFilterTabs
           filterStatus={filterStatus}
           filterBU={filterBU}
@@ -32,17 +38,18 @@ export default function ProcurementMonitorPage() {
           data={mockData}
           onStatusChange={setFilterStatus}
           onBUChange={setFilterBU}
+          isMobile={isMobile}
         />
-
         <ProcurementTable
           transactions={filtered}
           total={mockData.length}
           onSelectTx={setSelectedTx}
+          isMobile={isMobile}
         />
       </div>
 
       {selectedTx && (
-        <DetailDrawer tx={selectedTx} onClose={() => setSelectedTx(null)} />
+        <DetailModal tx={selectedTx} onClose={() => setSelectedTx(null)} isMobile={isMobile} />
       )}
     </>
   );

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { getUser, clearTokens, AuthUser } from "@/lib/auth";
+import { getUser, clearTokens, AuthUser, getRefreshToken } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 type Role = "super_user" | "auditor" | "operator";
@@ -156,7 +156,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await api.post("/auth/logout", {});
+      await api.post("/auth/logout", { refreshToken: getRefreshToken() });
     } catch {
       // Tetap logout meski request gagal
     } finally {

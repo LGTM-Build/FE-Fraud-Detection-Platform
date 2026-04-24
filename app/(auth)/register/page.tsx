@@ -1,7 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/ui/ThemeProvider";
+import { api } from "@/lib/api";
+import { setTokens, setUser as saveUser, AuthUser } from "@/lib/auth";
 
 type Step = 1 | 2;
 
@@ -33,12 +36,14 @@ const INDUSTRIES = [
 
 export default function RegisterPage() {
   const { theme, toggle } = useTheme();
+  const router = useRouter();
 
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [apiError, setApiError] = useState("");
   const [industryOpen, setIndustryOpen] = useState(false);
 
   const [company, setCompany] = useState<CompanyForm>({
@@ -63,23 +68,50 @@ export default function RegisterPage() {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError("");
+    setApiError("");
+
     if (user.password !== user.confirmPassword) {
       setPasswordError("Password dan konfirmasi password tidak cocok.");
       return;
     }
+
     setLoading(true);
-    // TODO: Integrate with POST /auth/register-company
-    // Payload:
-    // {
-    //   companyName: company.companyName,
-    //   industry: company.industry,
-    //   employeeCount: Number(company.employeeCount),
-    //   fullName: user.fullName,
-    //   email: user.email,
-    //   password: user.password,
-    // }
-    // Response: { data: { accessToken, refreshToken, user: { id, fullName, email, companyId, role } } }
-    setTimeout(() => setLoading(false), 1800);
+    try {
+      const res = await api.post<{
+        data: {
+          accessToken: string;
+          refreshToken: string;
+          user: AuthUser;
+        };
+      }>(
+        "/auth/register-company",
+        {
+          companyName: company.companyName,
+          industry: company.industry,
+          employeeCount: Number(company.employeeCount),
+          fullName: user.fullName,
+          email: user.email,
+          password: user.password,
+        },
+        { skipAuth: true }
+      );
+
+      // Simpan token ke localStorage + cookie (agar middleware bisa baca)
+      setTokens({
+        accessToken: res.data.accessToken,
+        refreshToken: res.data.refreshToken,
+      });
+
+      // Simpan user ke localStorage
+      saveUser(res.data.user);
+
+      // Redirect ke dashboard
+      router.push("/dashboard");
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Registrasi gagal. Coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const EyeIcon = ({ open }: { open: boolean }) =>
@@ -723,6 +755,25 @@ export default function RegisterPage() {
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+                  {apiError && (
+                    <div style={{
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      background: "rgba(239,68,68,0.06)",
+                      border: "1px solid rgba(239,68,68,0.2)",
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "flex-start",
+                    }}>
+                      <svg style={{ flexShrink: 0, marginTop: "1px" }} width="13" height="13" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="8" stroke="#ef4444" strokeWidth="1.5"/>
+                        <path d="M10 6v5M10 13v.5" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round"/>
+                      </svg>
+                      <p style={{ fontSize: "11px", color: "#ef4444", lineHeight: 1.5, margin: 0 }}>
+                        {apiError}
+                      </p>
+                    </div>
+                  )}
                   <button type="submit" className="reg-submit" disabled={loading}>
                     {loading ? (
                       <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>

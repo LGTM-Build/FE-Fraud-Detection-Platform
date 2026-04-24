@@ -1,9 +1,18 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { getUser, clearTokens, AuthUser } from "@/lib/auth";
+import { api } from "@/lib/api";
 
-type Role = "SUPER_USER" | "AUDITOR" | "OPERATOR" | "DEPARTMENT_HEAD";
+type Role = "super_user" | "auditor" | "operator";
+
+// Role display metadata
+const roleDisplay: Record<Role, { label: string; color: string; bg: string; border: string }> = {
+  super_user: { label: "Super User", color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
+  auditor:    { label: "Auditor",    color: "var(--em)", bg: "var(--em-subtle)",      border: "rgba(16,185,129,0.20)" },
+  operator:   { label: "Operator",   color: "#d97706", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.20)" },
+};
 
 interface NavItem {
   label: string;
@@ -75,47 +84,36 @@ const Icons = {
       <polyline points="6 9 12 15 18 9"/>
     </svg>
   ),
-  chevronsUpDown: (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <polyline points="7 15 12 20 17 15"/>
-      <polyline points="7 9 12 4 17 9"/>
-    </svg>
-  ),
-  check: (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
-  ),
 };
 
 const navGroups: NavGroup[] = [
   {
     group: "Monitor",
-    roles: ["SUPER_USER", "AUDITOR", "OPERATOR", "DEPARTMENT_HEAD"],
+    roles: ["super_user", "auditor", "operator"],
     items: [
-      { label: "Dashboard",         href: "/dashboard",             icon: Icons.dashboard,    roles: ["SUPER_USER", "AUDITOR", "OPERATOR", "DEPARTMENT_HEAD"] },
-      { label: "Expense Monitor",   href: "/dashboard/expense",     icon: Icons.expense,      roles: ["SUPER_USER", "AUDITOR", "OPERATOR", "DEPARTMENT_HEAD"], badge: 12 },
-      { label: "Procurement",       href: "/dashboard/procurement", icon: Icons.procurement,  roles: ["SUPER_USER", "AUDITOR", "OPERATOR"], badge: 5 },
-      { label: "Vendor Intelligence",href: "/dashboard/vendor",     icon: Icons.vendor,       roles: ["SUPER_USER", "AUDITOR"] },
+      { label: "Dashboard",          href: "/dashboard",             icon: Icons.dashboard,   roles: ["super_user", "auditor", "operator"] },
+      { label: "Expense Monitor",    href: "/dashboard/expense",     icon: Icons.expense,     roles: ["super_user", "auditor", "operator"], badge: 12 },
+      { label: "Procurement",        href: "/dashboard/procurement", icon: Icons.procurement, roles: ["super_user", "auditor", "operator"], badge: 5 },
+      { label: "Vendor Intelligence",href: "/dashboard/vendor",      icon: Icons.vendor,      roles: ["super_user", "auditor"] },
     ],
   },
   {
     group: "Operasional",
-    roles: ["SUPER_USER", "AUDITOR", "OPERATOR", "DEPARTMENT_HEAD"],
+    roles: ["super_user", "auditor", "operator"],
     items: [
-      { label: "Report Generator",  href: "/dashboard/report",      icon: Icons.report,       roles: ["SUPER_USER", "AUDITOR", "DEPARTMENT_HEAD"] },
-      { label: "Import Center",     href: "/dashboard/import",      icon: Icons.import,       roles: ["SUPER_USER", "OPERATOR"] },
+      { label: "Report Generator", href: "/dashboard/report",  icon: Icons.report,  roles: ["super_user", "auditor"] },
+      { label: "Import Center",    href: "/dashboard/import",  icon: Icons.import,  roles: ["super_user", "operator"] },
     ],
   },
   {
     group: "Sistem",
-    roles: ["SUPER_USER"],
+    roles: ["super_user"],
     items: [
       {
         label: "Settings",
         href: "/dashboard/settings",
         icon: Icons.settings,
-        roles: ["SUPER_USER"],
+        roles: ["super_user"],
         subItems: [
           { label: "General",         href: "/dashboard/settings" },
           { label: "Team Management", href: "/dashboard/settings/team" },
@@ -125,21 +123,6 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-// Role metadata
-const roleData: Record<Role, { name: string; dept: string; color: string; bg: string; border: string }> = {
-  SUPER_USER:      { name: "Admin User",    dept: "Super User",      color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
-  AUDITOR:         { name: "Auditor User",  dept: "Internal Audit",  color: "var(--em)", bg: "var(--em-subtle)",      border: "rgba(16,185,129,0.20)" },
-  OPERATOR:        { name: "Operator User", dept: "Finance Ops",     color: "#d97706", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.20)" },
-  DEPARTMENT_HEAD: { name: "Dept Head",     dept: "Department Head", color: "#6366f1", bg: "rgba(99,102,241,0.08)", border: "rgba(99,102,241,0.20)" },
-};
-
-const roleLabels: Record<Role, string> = {
-  SUPER_USER: "Super User",
-  AUDITOR: "Auditor",
-  OPERATOR: "Operator",
-  DEPARTMENT_HEAD: "Dept Head",
-};
-
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
@@ -147,36 +130,40 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   const pathname = usePathname();
-  const [currentRole, setCurrentRole] = useState<Role>("SUPER_USER");
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith("/dashboard/settings"));
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  const rd = roleData[currentRole];
-
-  // Close popover on outside click
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setPopoverOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    setUser(getUser());
   }, []);
 
-  const handleRoleSwitch = (role: Role) => {
-    setCurrentRole(role);
-    setPopoverOpen(false);
-    // If new role doesn't have access to settings, close accordion
-    if (role !== "SUPER_USER") setSettingsOpen(false);
-  };
+  const role = (user?.role ?? "operator") as Role;
+  const rd = roleDisplay[role] ?? roleDisplay["operator"];
 
-  // Filter nav by current role
+  // Initials dari fullName
+  const initials = user?.fullName
+    ? user.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+    : "??";
+
+  // Filter nav by role
   const visibleGroups = navGroups
-    .filter(g => g.roles.includes(currentRole))
-    .map(g => ({ ...g, items: g.items.filter(item => item.roles.includes(currentRole)) }))
+    .filter(g => g.roles.includes(role))
+    .map(g => ({ ...g, items: g.items.filter(item => item.roles.includes(role)) }))
     .filter(g => g.items.length > 0);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await api.post("/auth/logout", {});
+    } catch {
+      // Tetap logout meski request gagal
+    } finally {
+      clearTokens();
+      router.push("/login");
+    }
+  };
 
   return (
     <aside style={{
@@ -243,19 +230,6 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           width: 100%; text-align: left; font-family: "DM Sans", sans-serif;
         }
         .profile-trigger:hover { background: var(--em-subtle); }
-        .role-option {
-          display: flex; align-items: center; gap: 10px;
-          padding: 8px 12px; border-radius: 9px;
-          cursor: pointer; transition: background 0.15s;
-          border: none; background: transparent; width: 100%;
-          text-align: left; font-family: "DM Sans", sans-serif;
-        }
-        .role-option:hover { background: var(--em-subtle); }
-        @keyframes popoverIn {
-          from { opacity: 0; transform: translateY(6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .popover-anim { animation: popoverIn 0.15s ease; }
       `}</style>
 
       {/* Logo — 64px exact */}
@@ -355,102 +329,70 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         ))}
       </nav>
 
-      {/* Profile + Role Switcher */}
-      <div style={{ borderTop: "1px solid var(--border)", padding: "10px 8px", flexShrink: 0, position: "relative" }} ref={popoverRef}>
+      {/* Profile + Logout */}
+      <div style={{ borderTop: "1px solid var(--border)", padding: "10px 8px", flexShrink: 0 }}>
 
-        {/* Popover */}
-        {popoverOpen && !collapsed && (
-          <div className="popover-anim" style={{
-            position: "absolute", bottom: "calc(100% + 8px)", left: "8px", right: "8px",
-            background: "var(--bg)", border: "1px solid var(--border)",
-            borderRadius: "14px", padding: "8px",
-            boxShadow: "0 -8px 32px rgba(0,0,0,0.14)",
-            zIndex: 10,
-          }}>
-            <div style={{ fontSize: "10px", fontWeight: 600, color: "var(--tm)", textTransform: "uppercase", letterSpacing: "1px", padding: "4px 8px 8px", borderBottom: "1px solid var(--border)", marginBottom: "6px" }}>
-              Preview sebagai role
-            </div>
-            {(["SUPER_USER", "AUDITOR", "OPERATOR", "DEPARTMENT_HEAD"] as Role[]).map(role => {
-              const rd = roleData[role];
-              const isActive = currentRole === role;
-              return (
-                <button
-                  key={role}
-                  className="role-option"
-                  onClick={() => handleRoleSwitch(role)}
-                >
-                  {/* Avatar */}
-                  <div style={{
-                    width: "28px", height: "28px", borderRadius: "50%",
-                    background: isActive ? `linear-gradient(135deg, var(--em), var(--em2))` : "var(--surface-2)",
-                    border: `1px solid ${isActive ? "transparent" : "var(--border)"}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "10px", fontWeight: 700,
-                    color: isActive ? "#fff" : "var(--tm)",
-                    flexShrink: 0,
-                  }}>
-                    {rd.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "12px", fontWeight: 500, color: "var(--tp)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {rd.name}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "1px" }}>
-                      <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "100px", background: rd.bg, color: rd.color, border: `1px solid ${rd.border}`, fontWeight: 500 }}>
-                        {roleLabels[role]}
-                      </span>
-                    </div>
-                  </div>
-
-                  {isActive && (
-                    <span style={{ color: "var(--em)", flexShrink: 0 }}>{Icons.check}</span>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Dev note */}
-            {/* <div style={{ margin: "8px 0 4px", padding: "8px 10px", borderRadius: "8px", background: "var(--em-subtle)", border: "1px solid var(--border)" }}>
-              <p style={{ fontSize: "10px", color: "var(--tm)", lineHeight: 1.5 }}>
-                🛠 Dev mode — ganti dengan <code style={{ fontSize: "10px", color: "var(--em)" }}>useAuth()</code> saat auth siap
-              </p>
-            </div> */}
-          </div>
-        )}
-
-        {/* Profile trigger button */}
-        <button
-          className="profile-trigger"
-          onClick={() => { if (!collapsed) setPopoverOpen(p => !p); }}
-          title={collapsed ? `Role: ${roleLabels[currentRole]}` : undefined}
-          style={{ justifyContent: collapsed ? "center" : "flex-start" }}
-        >
+        {/* User info */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: "10px",
+          padding: "8px 10px", borderRadius: "10px",
+          justifyContent: collapsed ? "center" : "flex-start",
+          marginBottom: "4px",
+        }}>
           {/* Avatar */}
           <div style={{
-            width: "32px", height: "32px", borderRadius: "50%",
+            width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
             background: "linear-gradient(135deg, var(--em), var(--em2))",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "11px", fontWeight: 700, color: "#fff", flexShrink: 0,
+            fontSize: "11px", fontWeight: 700, color: "#fff",
           }}>
-            {rd.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+            {initials}
           </div>
-
           {!collapsed && (
-            <>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--tp)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {rd.name}
-                </div>
-                <div style={{ fontSize: "11px", fontWeight: 500, color: rd.color }}>
-                  {roleLabels[currentRole]}
-                </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--tp)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user?.fullName ?? "—"}
               </div>
-              <span style={{ color: "var(--tm)", flexShrink: 0, transition: "transform 0.2s", transform: popoverOpen ? "rotate(180deg)" : "none" }}>
-                {Icons.chevronsUpDown}
+              <span style={{
+                fontSize: "10px", padding: "1px 6px", borderRadius: "100px",
+                background: rd.bg, color: rd.color, border: `1px solid ${rd.border}`,
+                fontWeight: 500, display: "inline-block", marginTop: "2px",
+              }}>
+                {rd.label}
               </span>
-            </>
+            </div>
           )}
+        </div>
+
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          title={collapsed ? "Logout" : undefined}
+          style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            padding: "8px 12px", borderRadius: "10px",
+            border: "none", background: "transparent", cursor: loggingOut ? "not-allowed" : "pointer",
+            color: "var(--ts)", fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
+            width: "100%", transition: "background 0.15s, color 0.15s",
+            justifyContent: collapsed ? "center" : "flex-start",
+            opacity: loggingOut ? 0.6 : 1,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "rgba(239,68,68,0.08)";
+            e.currentTarget.style.color = "#ef4444";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "var(--ts)";
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0 }}>
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          {!collapsed && <span>{loggingOut ? "Keluar..." : "Logout"}</span>}
         </button>
       </div>
     </aside>

@@ -1,16 +1,22 @@
 "use client"
 
-export default function QuickActions() {
+interface QuickActionsProps {
+  isMobile?: boolean;
+}
+
+export default function QuickActions({ isMobile }: QuickActionsProps) {
   return (
-    <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+    <div style={{ display: "flex", gap: "8px", flexShrink: 0, flexWrap: "wrap" }}>
       <a
         href="/dashboard/import"
         style={{
           display: "inline-flex", alignItems: "center", gap: "6px",
-          padding: "9px 16px", borderRadius: "10px",
+          padding: isMobile ? "8px 12px" : "9px 16px",
+          borderRadius: "10px",
           border: "1px solid var(--border)",
           background: "var(--surface-2)",
-          fontSize: "13px", color: "var(--ts)",
+          fontSize: isMobile ? "12px" : "13px",
+          color: "var(--ts)",
           textDecoration: "none", fontWeight: 400,
           transition: "all 0.15s",
         }}
@@ -30,17 +36,19 @@ export default function QuickActions() {
           <polyline points="17 8 12 3 7 8"/>
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
-        Import CSV
+        {isMobile ? "Import" : "Import CSV"}
       </a>
 
       <a
         href="/dashboard/report"
         style={{
           display: "inline-flex", alignItems: "center", gap: "6px",
-          padding: "9px 16px", borderRadius: "10px",
+          padding: isMobile ? "8px 12px" : "9px 16px",
+          borderRadius: "10px",
           background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)",
           border: "none",
-          fontSize: "13px", color: "#fff",
+          fontSize: isMobile ? "12px" : "13px",
+          color: "#fff",
           textDecoration: "none", fontWeight: 500,
           boxShadow: "0 4px 16px rgba(16,185,129,0.25)",
           transition: "all 0.2s",
@@ -57,7 +65,7 @@ export default function QuickActions() {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
         </svg>
-        Buat Laporan
+        {isMobile ? "Laporan" : "Buat Laporan"}
       </a>
     </div>
   );

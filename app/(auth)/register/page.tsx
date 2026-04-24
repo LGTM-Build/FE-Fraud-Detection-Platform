@@ -11,7 +11,7 @@ import RegisterLeftPanel from "@/components/auth/register/RegisterLeftPanel";
 import StepIndicator from "@/components/auth/register/StepIndicator";
 import CompanyForm, { CompanyFormData } from "@/components/auth/register/CompanyForm";
 import UserForm, { UserFormData } from "@/components/auth/register/UserForm";
-import styles from "./register.module.css";
+import styles from "@/app/(auth)/register/register.module.css";
 
 type Step = 1 | 2;
 

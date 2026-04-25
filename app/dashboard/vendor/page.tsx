@@ -1,6 +1,5 @@
 "use client";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 import { vendors, FilterStatus, Vendor } from "@/data/vendors";
 import { PageHeader } from "@/components/dashboard/vendor/PageHeader";
 import { SummaryStrip } from "@/components/dashboard/vendor/SummaryStrip";
@@ -12,6 +11,14 @@ export default function VendorIntelligencePage() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const filtered = vendors.filter((v) => {
     if (filterStatus !== "all" && v.status !== filterStatus) return false;
@@ -21,32 +28,30 @@ export default function VendorIntelligencePage() {
 
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-        <PageHeader />
-
-        <SummaryStrip vendors={vendors} />
-
+      <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "16px" : "24px" }}>
+        <PageHeader isMobile={isMobile} />
+        <SummaryStrip vendors={vendors} isMobile={isMobile} />
         <VendorFilters
           filterStatus={filterStatus}
           search={search}
           vendors={vendors}
           onStatusChange={setFilterStatus}
           onSearchChange={setSearch}
+          isMobile={isMobile}
         />
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
+          gap: isMobile ? "12px" : "16px",
+        }}>
           {filtered.map((vendor) => (
-            <VendorCard
-              key={vendor.id}
-              vendor={vendor}
-              onClick={() => setSelectedVendor(vendor)}
-            />
+            <VendorCard key={vendor.id} vendor={vendor} onClick={() => setSelectedVendor(vendor)} />
           ))}
         </div>
       </div>
 
       {selectedVendor && (
-        <VendorDetail vendor={selectedVendor} onClose={() => setSelectedVendor(null)} />
+        <VendorDetail vendor={selectedVendor} onClose={() => setSelectedVendor(null)} isMobile={isMobile} />
       )}
     </>
   );

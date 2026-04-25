@@ -1,24 +1,25 @@
 "use client";
 import { useTheme } from "@/components/ui/ThemeProvider";
+import { useTopBarMeta } from "@/contexts/TopBarContext"; // sesuaikan path
 
 interface TopBarProps {
-  title: string;
-  subtitle?: string;
+  onMenuClick?: () => void;
+  showMenuButton?: boolean;
 }
 
-export default function TopBar({ title, subtitle }: TopBarProps) {
+export default function TopBar({ onMenuClick, showMenuButton }: TopBarProps) {
   const { theme, toggle } = useTheme();
+  // Baca title & subtitle dari context — di-set oleh masing-masing page
+  const { title, subtitle } = useTopBarMeta();
 
   return (
     <>
-      {/* Spacer so content doesn't hide behind fixed bar */}
       <div style={{ height: "64px", flexShrink: 0 }} />
 
       <header style={{
         position: "fixed",
         top: 0,
-        // offset by sidebar width — CSS var so it updates when sidebar collapses
-        left: "var(--sidebar-w, 220px)",
+        left: showMenuButton ? "0" : "var(--sidebar-w, 220px)",
         right: 0,
         height: "64px",
         zIndex: 50,
@@ -26,9 +27,9 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 28px",
+        padding: "0 16px",
         background: "var(--bg)",
-        gap: "16px",
+        gap: "12px",
         transition: "left 0.25s ease",
       }}>
         <style>{`
@@ -46,36 +47,53 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
             color: var(--em);
             background: var(--em-subtle);
           }
+          .topbar-search {
+            display: flex; align-items: center; gap: 8px;
+            padding: 0 12px; height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+          }
+          @media (max-width: 767px) {
+            .topbar-search { display: none !important; }
+            .topbar-subtitle { display: none !important; }
+          }
+          @media (max-width: 1023px) {
+            .topbar-search input { width: 120px !important; }
+          }
         `}</style>
 
-        {/* Page title */}
-        <div style={{ flexShrink: 0 }}>
-          <h1 style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: "16px", fontWeight: 700,
-            color: "var(--tp)", letterSpacing: "-0.3px",
-            lineHeight: 1.2,
-          }}>
-            {title}
-          </h1>
-          {subtitle && (
-            <p style={{ fontSize: "12px", color: "var(--tm)", marginTop: "1px" }}>
-              {subtitle}
-            </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {showMenuButton && (
+            <button className="topbar-icon-btn" onClick={onMenuClick} aria-label="Buka menu">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
           )}
+
+          <div style={{ flexShrink: 0 }}>
+            <h1 style={{
+              fontFamily: "'Syne', sans-serif",
+              fontSize: "16px", fontWeight: 700,
+              color: "var(--tp)", letterSpacing: "-0.3px",
+              lineHeight: 1.2,
+            }}>
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="topbar-subtitle" style={{ fontSize: "12px", color: "var(--tm)", marginTop: "1px" }}>
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Right controls */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-
-          {/* Search */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            padding: "0 12px", height: "36px",
-            borderRadius: "10px",
-            border: "1px solid var(--border)",
-            background: "var(--surface-2)",
-          }}>
+          <div className="topbar-search">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="8"/>
               <path d="M21 21l-4.35-4.35"/>
@@ -97,7 +115,6 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
             </span>
           </div>
 
-          {/* Theme toggle */}
           <button className="topbar-icon-btn" onClick={toggle} aria-label="Toggle theme">
             {theme === "dark"
               ? (

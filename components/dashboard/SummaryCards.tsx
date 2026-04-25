@@ -4,12 +4,19 @@ import { cards } from "@/data/summary-cards";
 import { accentMap } from "@/lib/summary-cards";
 import TrendIcon from "@/components/ui/TrendIcon";
 
-export default function SummaryCards() {
+interface SummaryCardsProps {
+  isMobile?: boolean;
+  isTablet?: boolean;
+}
+
+export default function SummaryCards({ isMobile, isTablet }: SummaryCardsProps) {
+  const cols = isMobile ? "repeat(2, 1fr)" : isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)";
+
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "repeat(4, 1fr)",
-      gap: "16px",
+      gridTemplateColumns: cols,
+      gap: isMobile ? "10px" : "16px",
     }}>
       {cards.map((card) => {
         const a = accentMap[card.accent ?? "default"];
@@ -19,11 +26,11 @@ export default function SummaryCards() {
             style={{
               background: a.bg,
               border: `1px solid ${a.border}`,
-              borderRadius: "16px",
-              padding: "20px 22px",
+              borderRadius: isMobile ? "12px" : "16px",
+              padding: isMobile ? "14px 16px" : "20px 22px",
               display: "flex",
               flexDirection: "column",
-              gap: "14px",
+              gap: isMobile ? "10px" : "14px",
               transition: "transform 0.2s, box-shadow 0.2s",
               cursor: "default",
             }}
@@ -37,11 +44,19 @@ export default function SummaryCards() {
             }}
           >
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "12px", fontWeight: 500, color: "var(--ts)", lineHeight: 1.3 }}>
+              <span style={{
+                fontSize: isMobile ? "11px" : "12px",
+                fontWeight: 500,
+                color: "var(--ts)",
+                lineHeight: 1.3,
+                paddingRight: "4px",
+              }}>
                 {card.label}
               </span>
               <div style={{
-                width: "34px", height: "34px", borderRadius: "9px",
+                width: isMobile ? "28px" : "34px",
+                height: isMobile ? "28px" : "34px",
+                borderRadius: "9px",
                 background: a.icon,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 color: a.iconColor, flexShrink: 0,
@@ -53,8 +68,11 @@ export default function SummaryCards() {
             <div>
               <div style={{
                 fontFamily: "'Syne', sans-serif",
-                fontSize: "28px", fontWeight: 800,
-                color: "var(--tp)", letterSpacing: "-1px", lineHeight: 1,
+                fontSize: isMobile ? "22px" : "28px",
+                fontWeight: 800,
+                color: "var(--tp)",
+                letterSpacing: "-1px",
+                lineHeight: 1,
               }}>
                 {card.value}
               </div>
@@ -67,11 +85,13 @@ export default function SummaryCards() {
               display: "flex", alignItems: "center", gap: "4px",
               fontSize: "11px", fontWeight: 500,
               color: a.trend,
-              paddingTop: "10px",
+              paddingTop: "8px",
               borderTop: `1px solid ${a.border}`,
             }}>
               <TrendIcon trend={card.trend} />
-              {card.trendVal}
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {card.trendVal}
+              </span>
             </div>
           </div>
         );

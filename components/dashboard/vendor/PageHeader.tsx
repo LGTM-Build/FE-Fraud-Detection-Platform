@@ -1,8 +1,10 @@
-export function PageHeader() {
+interface PageHeaderProps { isMobile?: boolean; }
+
+export function PageHeader({ isMobile }: PageHeaderProps) {
   return (
     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
       <div>
-        <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "22px", fontWeight: 800, color: "var(--tp)", letterSpacing: "-0.8px", marginBottom: "4px" }}>
+        <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: isMobile ? "18px" : "22px", fontWeight: 800, color: "var(--tp)", letterSpacing: "-0.8px", marginBottom: "4px" }}>
           Vendor Intelligence
         </h1>
         <p style={{ fontSize: "13px", color: "var(--tm)", fontWeight: 300 }}>

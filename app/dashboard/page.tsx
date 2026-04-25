@@ -6,8 +6,14 @@ import FraudTrendChart from "@/components/dashboard/FraudTrendChart";
 import RecentTransactionsTable from "@/components/dashboard/RecentTransactionsTable";
 import QuickActions from "@/components/dashboard/QuickActions";
 import HighAlertList from "@/components/dashboard/HighAlertList";
+import { usePageTitle } from "@/contexts/TopBarContext";
 
 export default function DashboardPage() {
+
+  usePageTitle({
+    title: "Dashboard",
+  });
+
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
 

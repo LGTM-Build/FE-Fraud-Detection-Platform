@@ -5,8 +5,14 @@ import { PageHeader } from "@/components/dashboard/procurement/PageHeader";
 import { StatusFilterTabs } from "@/components/dashboard/procurement/StatusFilterTabs";
 import { ProcurementTable } from "@/components/dashboard/procurement/ProcurementTable";
 import { DetailModal } from "@/components/dashboard/procurement/DetailDrawer";
+import { usePageTitle } from "@/contexts/TopBarContext";
 
 export default function ProcurementMonitorPage() {
+
+  usePageTitle({
+    title: "Procurement",
+  });
+
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [filterBU, setFilterBU] = useState("all");
   const [selectedTx, setSelectedTx] = useState<ProcurementTransaction | null>(null);

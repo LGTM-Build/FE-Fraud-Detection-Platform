@@ -5,8 +5,14 @@ import { StatusFilterTabs } from "@/components/dashboard/expense/StatusFilterTab
 import { ExpenseTable } from "@/components/dashboard/expense/ExpenseTable";
 import { DetailModal } from "@/components/dashboard/expense/DetailDrawer";
 import { PageHeader } from "@/components/dashboard/expense/PageHeader";
+import { usePageTitle } from "@/contexts/TopBarContext";
 
 export default function ExpenseMonitorPage() {
+
+  usePageTitle({
+    title: "Expense",
+  });
+  
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [filterDept, setFilterDept] = useState("all");
   const [selectedTx, setSelectedTx] = useState<ExpenseTransaction | null>(null);

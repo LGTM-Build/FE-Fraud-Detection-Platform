@@ -7,8 +7,14 @@ import { ReportTypeSelector } from "@/components/dashboard/report/ReportTypeSele
 import { ReportConfig } from "@/components/dashboard/report/ReportConfig";
 import { ReportPreview } from "@/components/dashboard/report/ReportPreview";
 import { ReportHistory } from "@/components/dashboard/report/ReportHistory";
+import { usePageTitle } from "@/contexts/TopBarContext";
 
 export default function ReportGeneratorPage() {
+
+  usePageTitle({
+    title: "Report",
+  });
+
   const [scope, setScope] = useState<ReportScope>("all");
   const [reportType, setReportType] = useState<ReportType>("summary");
   const [format, setFormat] = useState<ReportFormat>("pdf");

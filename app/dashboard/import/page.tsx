@@ -8,8 +8,14 @@ import { UploadStep } from "@/components/dashboard/import/UploadStep";
 import { MappingStep } from "@/components/dashboard/import/MappingStep";
 import { ProcessingStep, DoneStep } from "@/components/dashboard/import/ImportSteps";
 import { ImportHistory } from "@/components/dashboard/import/ImportHistory";
+import { usePageTitle } from "@/contexts/TopBarContext";
 
 export default function ImportCenterPage() {
+
+  usePageTitle({
+    title: "Import Center",
+  });
+
   const [step, setStep] = useState<Step>("upload");
   const [dragOver, setDragOver] = useState(false);
   const [selectedModule, setSelectedModule] = useState<ImportModule>("expense");

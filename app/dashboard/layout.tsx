@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
+import { TopBarProvider } from "@/contexts/TopBarContext"; // sesuaikan path
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -27,8 +28,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const sidebarW = !mounted || isMobile ? "0px" : collapsed ? "64px" : "220px";
 
   return (
-    <>
-      {/* Global style: force aside inside mobile drawer to not be sticky */}
+    // TopBarProvider membungkus segalanya agar page bisa inject title
+    <TopBarProvider>
       <style>{`
         .mobile-drawer aside {
           position: relative !important;
@@ -45,16 +46,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ["--sidebar-w" as string]: sidebarW,
         }}
       >
-        {/* Desktop / Tablet sidebar — in normal flow */}
+        {/* Desktop / Tablet sidebar */}
         {mounted && !isMobile && (
           <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         )}
 
-        {/* Mobile drawer — always in DOM after mount so transition works,
-            but slid off-screen. The .mobile-drawer class overrides aside sticky. */}
+        {/* Mobile drawer */}
         {mounted && isMobile && (
           <>
-            {/* Backdrop */}
             <div
               onClick={() => setMobileMenuOpen(false)}
               style={{
@@ -65,13 +64,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 transition: "opacity 0.22s ease",
               }}
             />
-            {/* Drawer wrapper — position:fixed, clips the aside inside */}
             <div
               className="mobile-drawer"
               style={{
                 position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 101,
                 width: "260px",
-                overflow: "hidden",           // clips anything inside
+                overflow: "hidden",
                 transform: mobileMenuOpen ? "translateX(0)" : "translateX(-260px)",
                 transition: "transform 0.25s ease",
                 willChange: "transform",
@@ -90,9 +88,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           minWidth: 0,
           overflow: "hidden",
         }}>
+          {/* TopBar sekarang baca title dari context, bukan prop statis */}
           <TopBar
-            title="Dashboard"
-            subtitle="Ringkasan aktivitas fraud hari ini"
             onMenuClick={(mounted && isMobile) ? () => setMobileMenuOpen(p => !p) : undefined}
             showMenuButton={mounted && isMobile}
           />
@@ -107,6 +104,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
-    </>
+    </TopBarProvider>
   );
 }

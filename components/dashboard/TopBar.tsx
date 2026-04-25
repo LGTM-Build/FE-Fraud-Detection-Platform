@@ -1,19 +1,19 @@
 "use client";
 import { useTheme } from "@/components/ui/ThemeProvider";
+import { useTopBarMeta } from "@/contexts/TopBarContext"; // sesuaikan path
 
 interface TopBarProps {
-  title: string;
-  subtitle?: string;
   onMenuClick?: () => void;
   showMenuButton?: boolean;
 }
 
-export default function TopBar({ title, subtitle, onMenuClick, showMenuButton }: TopBarProps) {
+export default function TopBar({ onMenuClick, showMenuButton }: TopBarProps) {
   const { theme, toggle } = useTheme();
+  // Baca title & subtitle dari context — di-set oleh masing-masing page
+  const { title, subtitle } = useTopBarMeta();
 
   return (
     <>
-      {/* Spacer so content doesn't hide behind fixed bar */}
       <div style={{ height: "64px", flexShrink: 0 }} />
 
       <header style={{
@@ -64,7 +64,6 @@ export default function TopBar({ title, subtitle, onMenuClick, showMenuButton }:
         `}</style>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {/* Hamburger — mobile only */}
           {showMenuButton && (
             <button className="topbar-icon-btn" onClick={onMenuClick} aria-label="Buka menu">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -75,7 +74,6 @@ export default function TopBar({ title, subtitle, onMenuClick, showMenuButton }:
             </button>
           )}
 
-          {/* Page title */}
           <div style={{ flexShrink: 0 }}>
             <h1 style={{
               fontFamily: "'Syne', sans-serif",
@@ -95,8 +93,6 @@ export default function TopBar({ title, subtitle, onMenuClick, showMenuButton }:
 
         {/* Right controls */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-
-          {/* Search */}
           <div className="topbar-search">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="8"/>
@@ -119,7 +115,6 @@ export default function TopBar({ title, subtitle, onMenuClick, showMenuButton }:
             </span>
           </div>
 
-          {/* Theme toggle */}
           <button className="topbar-icon-btn" onClick={toggle} aria-label="Toggle theme">
             {theme === "dark"
               ? (

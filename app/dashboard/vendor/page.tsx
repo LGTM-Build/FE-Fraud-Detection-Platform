@@ -7,8 +7,14 @@ import { SummaryStrip } from "@/components/dashboard/vendor/SummaryStrip";
 import { VendorFilters } from "@/components/dashboard/vendor/VendorFilters";
 import { VendorCard } from "@/components/dashboard/vendor/VendorCard";
 import { VendorDetail } from "@/components/dashboard/vendor/VendorDetail";
+import { usePageTitle } from "@/contexts/TopBarContext";
 
 export default function VendorIntelligencePage() {
+
+  usePageTitle({
+    title: "Vendor",
+  });
+
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);

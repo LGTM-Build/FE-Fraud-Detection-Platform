@@ -1,17 +1,19 @@
-import { ProcurementTransaction, statusConfig, fmt } from "@/data/procurement";
+import { useState } from "react";
+import { ProcurementTransaction, statusConfig, fmt, getFraudRiskConfig } from "@/data/procurement";
 
 interface DetailModalProps {
   tx: ProcurementTransaction;
   onClose: () => void;
   isMobile?: boolean;
+  // TODO integrasi: sambungkan ke PATCH /api/procurement-transactions/:id/status
+  onApprove?: (id: string) => Promise<void>;
+  onReject?: (id: string) => Promise<void>;
+  onEscalate?: (id: string) => Promise<void>;
 }
 
-export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
+export function DetailModal({ tx, onClose, isMobile, onApprove, onReject, onEscalate }: DetailModalProps) {
   const sc = statusConfig[tx.status];
-  const scoreColor = tx.fraudScore >= 70 ? "#ef4444" : tx.fraudScore >= 30 ? "#f59e0b" : "#10b981";
-  const scoreBg = tx.fraudScore >= 70 ? "rgba(239,68,68,0.07)" : tx.fraudScore >= 30 ? "rgba(245,158,11,0.07)" : "rgba(16,185,129,0.07)";
-  const scoreBorder = tx.fraudScore >= 70 ? "rgba(239,68,68,0.18)" : tx.fraudScore >= 30 ? "rgba(245,158,11,0.18)" : "rgba(16,185,129,0.18)";
-  const scoreLabel = tx.fraudScore >= 70 ? "High Risk — perlu tindakan segera" : tx.fraudScore >= 30 ? "Medium Risk — perlu review" : "Low Risk — aman";
+  const risk = getFraudRiskConfig(tx.fraudScore);
 
   const detailRows = [
     { label: "Item",       value: tx.itemDescription },
@@ -24,6 +26,19 @@ export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
   ];
 
   const canAct = tx.status === "pending" || tx.status === "high-alert";
+  const [actionLoading, setActionLoading] = useState<"approve" | "reject" | "escalate" | null>(null);
+
+  const handleAction = async (type: "approve" | "reject" | "escalate") => {
+    const fn = type === "approve" ? onApprove : type === "reject" ? onReject : onEscalate;
+    if (!fn) return;
+    setActionLoading(type);
+    try {
+      await fn(tx.id);
+      onClose();
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   return (
     <>
@@ -54,9 +69,17 @@ export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
           </div>
           <MobileHeader tx={tx} sc={sc} onClose={onClose} />
           <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-            <MobileBody tx={tx} scoreColor={scoreColor} scoreBg={scoreBg} scoreBorder={scoreBorder} scoreLabel={scoreLabel} detailRows={detailRows} sc={sc} />
+            <MobileBody 
+              tx={tx} 
+              scoreColor={risk.color} 
+              scoreBg={risk.bg} 
+              scoreBorder={risk.border} 
+              scoreLabel={risk.label} 
+              detailRows={detailRows} 
+              sc={sc} 
+            />
           </div>
-          {canAct && <ModalActions isMobile />}
+          {canAct && <ModalActions isMobile onApprove={() => handleAction("approve")} onReject={() => handleAction("reject")} onEscalate={() => handleAction("escalate")} actionLoading={actionLoading} />}
         </div>
       ) : (
         /* Centered modal */
@@ -81,15 +104,15 @@ export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
               {/* Left: score + AI + flags */}
               <div style={{ padding: "24px", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "20px" }}>
                 {/* Score */}
-                <div style={{ padding: "20px", borderRadius: "14px", background: scoreBg, border: `1px solid ${scoreBorder}` }}>
+                <div style={{ padding: "20px", borderRadius: "14px", background: risk.bg, border: `1px solid ${risk.border}` }}>
                   <div style={{ fontSize: "11px", color: "var(--tm)", marginBottom: "12px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px" }}>Fraud Score</div>
                   <div style={{ display: "flex", alignItems: "flex-end", gap: "16px", marginBottom: "12px" }}>
-                    <span style={{ fontFamily: "'Syne', sans-serif", fontSize: "56px", fontWeight: 800, color: scoreColor, lineHeight: 1 }}>{tx.fraudScore}</span>
+                    <span style={{ fontFamily: "'Syne', sans-serif", fontSize: "56px", fontWeight: 800, color: risk.color, lineHeight: 1 }}>{tx.fraudScore}</span>
                     <div style={{ flex: 1, paddingBottom: "6px" }}>
                       <div style={{ height: "8px", borderRadius: "4px", background: "var(--border)", overflow: "hidden", marginBottom: "6px" }}>
-                        <div style={{ width: `${tx.fraudScore}%`, height: "100%", background: `linear-gradient(90deg, ${scoreColor}88, ${scoreColor})`, borderRadius: "4px" }} />
+                        <div style={{ width: `${tx.fraudScore}%`, height: "100%", background: `linear-gradient(90deg, ${risk.color}88, ${risk.color})`, borderRadius: "4px" }} />
                       </div>
-                      <div style={{ fontSize: "12px", color: scoreColor, fontWeight: 500 }}>{scoreLabel}</div>
+                      <div style={{ fontSize: "12px", color: risk.color, fontWeight: 500 }}>{risk.label}</div>
                     </div>
                   </div>
                 </div>
@@ -156,7 +179,7 @@ export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
               </div>
             </div>
 
-            {canAct && <ModalActions />}
+            {canAct && <ModalActions onApprove={() => handleAction("approve")} onReject={() => handleAction("reject")} onEscalate={() => handleAction("escalate")} actionLoading={actionLoading} />}
           </div>
         </div>
       )}
@@ -279,14 +302,38 @@ function MobileBody({ tx, scoreColor, scoreBg, scoreBorder, scoreLabel, detailRo
   );
 }
 
-function ModalActions({ isMobile }: { isMobile?: boolean }) {
+function ModalActions({ isMobile, onApprove, onReject, onEscalate, actionLoading }: {
+  isMobile?: boolean;
+  onApprove: () => void;
+  onReject: () => void;
+  onEscalate: () => void;
+  actionLoading: "approve" | "reject" | "escalate" | null;
+}) {
   return (
     <div style={{ padding: isMobile ? "16px" : "20px 28px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "8px", background: "var(--surface-2)", flexShrink: 0 }}>
       <div style={{ fontSize: "11px", color: "var(--tm)", marginBottom: "2px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.6px" }}>Tindakan Auditor</div>
       <div style={{ display: "flex", gap: "8px" }}>
-        <button style={{ flex: 1, padding: isMobile ? "10px" : "11px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg, var(--em), var(--em2))", color: "#fff", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 4px 16px rgba(16,185,129,0.25)" }}>✓ Approve</button>
-        <button style={{ flex: 1, padding: isMobile ? "10px" : "11px", borderRadius: "10px", border: "1px solid rgba(239,68,68,0.30)", background: "rgba(239,68,68,0.06)", color: "#dc2626", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>✕ Reject</button>
-        <button style={{ padding: isMobile ? "10px 14px" : "11px 18px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg)", color: "var(--ts)", fontSize: "13px", fontWeight: 400, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>↑ Eskalasi</button>
+        <button
+          onClick={onApprove}
+          disabled={actionLoading !== null}
+          style={{ flex: 1, padding: isMobile ? "10px" : "11px", borderRadius: "10px", border: "none", background: actionLoading ? "var(--surface-2)" : "linear-gradient(135deg, var(--em), var(--em2))", color: actionLoading ? "var(--tm)" : "#fff", fontSize: "13px", fontWeight: 500, cursor: actionLoading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: actionLoading ? "none" : "0 4px 16px rgba(16,185,129,0.25)", transition: "all 0.15s" }}
+        >
+          {actionLoading === "approve" ? "Menyimpan..." : "✓ Approve"}
+        </button>
+        <button
+          onClick={onReject}
+          disabled={actionLoading !== null}
+          style={{ flex: 1, padding: isMobile ? "10px" : "11px", borderRadius: "10px", border: "1px solid rgba(239,68,68,0.30)", background: "rgba(239,68,68,0.06)", color: "#dc2626", fontSize: "13px", fontWeight: 500, cursor: actionLoading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: actionLoading ? 0.6 : 1 }}
+        >
+          {actionLoading === "reject" ? "Menyimpan..." : "✕ Reject"}
+        </button>
+        <button
+          onClick={onEscalate}
+          disabled={actionLoading !== null}
+          style={{ padding: isMobile ? "10px 14px" : "11px 18px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg)", color: "var(--ts)", fontSize: "13px", fontWeight: 400, cursor: actionLoading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: actionLoading ? 0.6 : 1 }}
+        >
+          {actionLoading === "escalate" ? "..." : "↑ Eskalasi"}
+        </button>
       </div>
     </div>
   );

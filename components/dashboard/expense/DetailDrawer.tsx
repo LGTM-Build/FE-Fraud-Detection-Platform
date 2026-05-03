@@ -1,4 +1,4 @@
-import { ExpenseTransaction, statusConfig, fmt } from "@/data/expenses";
+import { ExpenseTransaction, statusConfig, fmt, getFraudRiskConfig } from "@/data/expenses";
 
 interface DetailModalProps {
   tx: ExpenseTransaction;
@@ -8,18 +8,9 @@ interface DetailModalProps {
 
 export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
   const sc = statusConfig[tx.status];
-  const scoreColor =
-    tx.fraudScore >= 70 ? "#ef4444" :
-    tx.fraudScore >= 30 ? "#f59e0b" : "#10b981";
-  const scoreBg =
-    tx.fraudScore >= 70 ? "rgba(239,68,68,0.07)" :
-    tx.fraudScore >= 30 ? "rgba(245,158,11,0.07)" : "rgba(16,185,129,0.07)";
-  const scoreBorder =
-    tx.fraudScore >= 70 ? "rgba(239,68,68,0.18)" :
-    tx.fraudScore >= 30 ? "rgba(245,158,11,0.18)" : "rgba(16,185,129,0.18)";
-  const scoreLabel =
-    tx.fraudScore >= 70 ? "High Risk — perlu tindakan segera" :
-    tx.fraudScore >= 30 ? "Medium Risk — perlu review" : "Low Risk — aman";
+  
+  // Mengambil konfigurasi warna fraud score secara terpusat
+  const risk = getFraudRiskConfig(tx.fraudScore);
 
   const detailRows = [
     { label: "Deskripsi",   value: tx.description },
@@ -77,10 +68,7 @@ export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
           <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
             <MobileBody
               tx={tx}
-              scoreColor={scoreColor}
-              scoreBg={scoreBg}
-              scoreBorder={scoreBorder}
-              scoreLabel={scoreLabel}
+              risk={risk}
               detailRows={detailRows}
               sc={sc}
             />
@@ -136,8 +124,8 @@ export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
                 <div style={{
                   padding: "20px",
                   borderRadius: "14px",
-                  background: scoreBg,
-                  border: `1px solid ${scoreBorder}`,
+                  background: risk.bg,
+                  border: `1px solid ${risk.border}`,
                 }}>
                   <div style={{ fontSize: "11px", color: "var(--tm)", marginBottom: "12px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px" }}>
                     Fraud Score
@@ -146,7 +134,7 @@ export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
                     <span style={{
                       fontFamily: "'Syne', sans-serif",
                       fontSize: "56px", fontWeight: 800,
-                      color: scoreColor, lineHeight: 1,
+                      color: risk.color, lineHeight: 1,
                     }}>
                       {tx.fraudScore}
                     </span>
@@ -157,12 +145,12 @@ export function DetailModal({ tx, onClose, isMobile }: DetailModalProps) {
                       }}>
                         <div style={{
                           width: `${tx.fraudScore}%`, height: "100%",
-                          background: `linear-gradient(90deg, ${scoreColor}88, ${scoreColor})`,
+                          background: `linear-gradient(90deg, ${risk.color}88, ${risk.color})`,
                           borderRadius: "4px",
                           transition: "width 0.6s cubic-bezier(0.22,1,0.36,1)",
                         }} />
                       </div>
-                      <div style={{ fontSize: "12px", color: scoreColor, fontWeight: 500 }}>{scoreLabel}</div>
+                      <div style={{ fontSize: "12px", color: risk.color, fontWeight: 500 }}>{risk.label}</div>
                     </div>
                   </div>
                 </div>
@@ -349,21 +337,21 @@ function MobileSheetHeader({ tx, sc, onClose }: { tx: ExpenseTransaction; sc: an
   );
 }
 
-function MobileBody({ tx, scoreColor, scoreBg, scoreBorder, scoreLabel, detailRows, sc }: any) {
+function MobileBody({ tx, risk, detailRows, sc }: any) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Score */}
-      <div style={{ padding: "16px", borderRadius: "12px", background: scoreBg, border: `1px solid ${scoreBorder}` }}>
+      <div style={{ padding: "16px", borderRadius: "12px", background: risk.bg, border: `1px solid ${risk.border}` }}>
         <div style={{ fontSize: "11px", color: "var(--tm)", marginBottom: "8px", fontWeight: 500 }}>Fraud Score</div>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: "40px", fontWeight: 800, color: scoreColor, lineHeight: 1 }}>
+          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: "40px", fontWeight: 800, color: risk.color, lineHeight: 1 }}>
             {tx.fraudScore}
           </span>
           <div style={{ flex: 1 }}>
             <div style={{ height: "6px", borderRadius: "3px", background: "var(--border)", overflow: "hidden", marginBottom: "6px" }}>
-              <div style={{ width: `${tx.fraudScore}%`, height: "100%", background: scoreColor, borderRadius: "3px" }} />
+              <div style={{ width: `${tx.fraudScore}%`, height: "100%", background: risk.color, borderRadius: "3px" }} />
             </div>
-            <div style={{ fontSize: "11px", color: scoreColor, fontWeight: 500 }}>{scoreLabel}</div>
+            <div style={{ fontSize: "11px", color: risk.color, fontWeight: 500 }}>{risk.label}</div>
           </div>
         </div>
       </div>

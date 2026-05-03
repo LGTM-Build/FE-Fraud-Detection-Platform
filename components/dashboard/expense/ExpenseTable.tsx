@@ -1,4 +1,4 @@
-import { ExpenseTransaction, statusConfig, fmt } from "@/data/expenses";
+import { ExpenseTransaction, statusConfig, fmt, getFraudRiskConfig } from "@/data/expenses";
 import { ScoreBar } from "@/components/dashboard/expense/ScoreBar";
 
 interface ExpenseTableProps {
@@ -11,7 +11,7 @@ interface ExpenseTableProps {
 // Mobile card view per transaction
 function ExpenseCard({ tx, onClick }: { tx: ExpenseTransaction; onClick: () => void }) {
   const sc = statusConfig[tx.status];
-  const scoreColor = tx.fraudScore >= 70 ? "#ef4444" : tx.fraudScore >= 30 ? "#f59e0b" : "#10b981";
+  const risk = getFraudRiskConfig(tx.fraudScore);
 
   return (
     <div
@@ -32,7 +32,7 @@ function ExpenseCard({ tx, onClick }: { tx: ExpenseTransaction; onClick: () => v
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--em)" }}>{tx.id}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: sc.dot }} />
+          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: sc.dot, flexShrink: 0 }} />
           <span style={{
             padding: "2px 8px", borderRadius: "100px",
             background: sc.bg, color: sc.color,
@@ -60,7 +60,7 @@ function ExpenseCard({ tx, onClick }: { tx: ExpenseTransaction; onClick: () => v
           background: "var(--em-subtle)", border: "1px solid var(--border)", color: "var(--ts)",
         }}>{tx.category}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "5px", marginLeft: "auto" }}>
-          <span style={{ fontSize: "11px", fontWeight: 700, color: scoreColor }}>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: risk.color }}>
             Score {tx.fraudScore}
           </span>
         </div>
@@ -141,7 +141,9 @@ export function ExpenseTable({ transactions, total, onSelectTx, isMobile }: Expe
                       <div style={{ fontSize: "11px", color: "var(--tm)" }}>{t.department} · {t.grade}</div>
                     </td>
                     <td style={{ padding: "13px 16px", maxWidth: "220px" }}>
-                      <div style={{ fontSize: "13px", color: "var(--tp)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.description}</div>
+                      <div style={{ fontSize: "13px", color: "var(--tp)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {t.description}
+                      </div>
                       <div style={{ fontSize: "11px", color: "var(--tm)", marginTop: "2px" }}>{t.merchant}</div>
                     </td>
                     <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
@@ -199,7 +201,7 @@ export function ExpenseTable({ transactions, total, onSelectTx, isMobile }: Expe
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <span style={{ fontSize: "12px", color: "var(--tm)" }}>
-          {transactions.length} dari {total} klaim
+          {transactions.length} dari {total} klaim ditampilkan
         </span>
         {!isMobile && (
           <span style={{ fontSize: "12px", color: "var(--tm)" }}>

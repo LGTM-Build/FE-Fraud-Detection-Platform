@@ -92,29 +92,7 @@ export default function TopBar({ onMenuClick, showMenuButton }: TopBarProps) {
         </div>
 
         {/* Right controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-          <div className="topbar-search">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" strokeWidth="2" strokeLinecap="round">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <input
-              placeholder="Cari transaksi..."
-              style={{
-                border: "none", background: "transparent",
-                fontSize: "13px", color: "var(--tp)", outline: "none",
-                width: "160px", fontFamily: "'DM Sans', sans-serif",
-              }}
-            />
-            <span style={{
-              fontSize: "10px", color: "var(--tm)",
-              background: "var(--em-subtle)", border: "1px solid var(--border)",
-              padding: "1px 5px", borderRadius: "5px", flexShrink: 0,
-            }}>
-              ⌘K
-            </span>
-          </div>
-
+        <div style={{ marginLeft: "auto" }}>
           <button className="topbar-icon-btn" onClick={toggle} aria-label="Toggle theme">
             {theme === "dark"
               ? (

@@ -5,13 +5,15 @@ import { useState, useEffect } from "react";
 import { getUser, clearTokens, AuthUser, getRefreshToken } from "@/lib/auth";
 import { api } from "@/lib/api";
 
-type Role = "super_user" | "auditor" | "operator";
+type Role = "super_user" | "super_admin" | "auditor" | "operator" | "department_head";
 
 // Role display metadata
 const roleDisplay: Record<Role, { label: string; color: string; bg: string; border: string }> = {
-  super_user: { label: "Super User", color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
-  auditor:    { label: "Auditor",    color: "var(--em)", bg: "var(--em-subtle)",      border: "rgba(16,185,129,0.20)" },
-  operator:   { label: "Operator",   color: "#d97706", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.20)" },
+  super_user:     { label: "Super User",     color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
+  super_admin:     { label: "Super Admin",     color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
+  auditor:        { label: "Auditor",        color: "var(--em)", bg: "var(--em-subtle)",      border: "rgba(16,185,129,0.20)" },
+  operator:       { label: "Operator",       color: "#d97706", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.20)" },
+  department_head: { label: "Department Head", color: "#7c3aed", bg: "rgba(124,58,237,0.08)", border: "rgba(124,58,237,0.20)" },
 };
 
 interface NavItem {
@@ -89,31 +91,31 @@ const Icons = {
 const navGroups: NavGroup[] = [
   {
     group: "Monitor",
-    roles: ["super_user", "auditor", "operator"],
+    roles: ["super_user", "super_admin", "auditor", "operator", "department_head"],
     items: [
-      { label: "Dashboard",          href: "/dashboard",             icon: Icons.dashboard,   roles: ["super_user", "auditor", "operator"] },
-      { label: "Expense Monitor",    href: "/dashboard/expense",     icon: Icons.expense,     roles: ["super_user", "auditor", "operator"], badge: 12 },
-      { label: "Procurement",        href: "/dashboard/procurement", icon: Icons.procurement, roles: ["super_user", "auditor", "operator"], badge: 5 },
-      { label: "Vendor Intelligence",href: "/dashboard/vendor",      icon: Icons.vendor,      roles: ["super_user", "auditor"] },
+      { label: "Dashboard",          href: "/dashboard",             icon: Icons.dashboard,   roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
+      { label: "Expense Monitor",    href: "/dashboard/expense",     icon: Icons.expense,     roles: ["super_user", "super_admin", "auditor", "operator", "department_head"], badge: 12 },
+      { label: "Procurement",        href: "/dashboard/procurement", icon: Icons.procurement, roles: ["super_user", "super_admin", "auditor", "operator", "department_head"], badge: 5 },
+      { label: "Vendor Intelligence",href: "/dashboard/vendor",      icon: Icons.vendor,      roles: ["super_user", "super_admin", "auditor", "department_head"] },
     ],
   },
   {
     group: "Operasional",
-    roles: ["super_user", "auditor", "operator"],
+    roles: ["super_user", "super_admin", "auditor", "operator", "department_head"],
     items: [
-      { label: "Report Generator", href: "/dashboard/report",  icon: Icons.report,  roles: ["super_user", "auditor"] },
-      { label: "Import Center",    href: "/dashboard/import",  icon: Icons.import,  roles: ["super_user", "operator"] },
+      { label: "Report Generator", href: "/dashboard/report",  icon: Icons.report,  roles: ["super_user", "super_admin", "auditor", "department_head"] },
+      { label: "Import Center",    href: "/dashboard/import",  icon: Icons.import,  roles: ["super_user", "super_admin", "operator", "department_head"] },
     ],
   },
   {
     group: "Sistem",
-    roles: ["super_user"],
+    roles: ["super_user", "super_admin"],
     items: [
       {
         label: "Settings",
         href: "/dashboard/settings",
         icon: Icons.settings,
-        roles: ["super_user"],
+        roles: ["super_user", "super_admin"],
         subItems: [
           { label: "General",         href: "/dashboard/settings" },
           { label: "Team Management", href: "/dashboard/settings/team" },

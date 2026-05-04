@@ -1,41 +1,48 @@
 import { useState } from "react";
-import { FilterStatus, FILTER_LABELS, ExpenseTransaction } from "@/data/expenses";
+import {
+  REVIEW_FILTERS_CONFIG,
+  HISTORY_FILTERS_CONFIG,
+  type ViewTab,
+  type ReviewFilter,
+  type HistoryFilter,
+  type ProcurementTransaction,
+} from "@/data/procurement";
 
-interface StatusFilterTabsProps {
-  filterStatus: FilterStatus;
-  filterDept: string;
-  departments: string[];
-  expenses: ExpenseTransaction[];
-  onStatusChange: (s: FilterStatus) => void;
-  onDeptChange: (d: string) => void;
-  isMobile?: boolean;
+interface FilterBarProps {
+  activeTab: ViewTab;
+  reviewFilter: ReviewFilter;
+  historyFilter: HistoryFilter;
+  filterBU: string;
+  reviewData: ProcurementTransaction[];
+  historyData: ProcurementTransaction[];
+  businessUnits: string[];
+  isMobile: boolean;
+  onReviewFilterChange: (f: ReviewFilter) => void;
+  onHistoryFilterChange: (f: HistoryFilter) => void;
+  onBUChange: (bu: string) => void;
 }
 
-const STATUS_ORDER: FilterStatus[] = [
-  "all", "high-alert", "pending", "auto-approved", "approved", "rejected",
-];
-
-export function StatusFilterTabs({
-  filterStatus,
-  filterDept,
-  departments,
-  expenses,
-  onStatusChange,
-  onDeptChange,
+export default function ProcurementFilterBar({
+  activeTab,
+  reviewFilter,
+  historyFilter,
+  filterBU,
+  reviewData,
+  historyData,
+  businessUnits,
   isMobile,
-}: StatusFilterTabsProps) {
-  // State untuk Custom Dropdown Departemen
-  const [deptOpen, setDeptOpen] = useState(false);
-  const dropdownOptions = ["all", ...departments.filter((d) => d !== "all")];
+  onReviewFilterChange,
+  onHistoryFilterChange,
+  onBUChange,
+}: FilterBarProps) {
+  // State untuk custom dropdown
+  const [buOpen, setBuOpen] = useState(false);
 
-  const counts: Record<FilterStatus, number> = {
-    all: expenses.length,
-    "high-alert": expenses.filter((t) => t.status === "high-alert").length,
-    pending: expenses.filter((t) => t.status === "pending").length,
-    "auto-approved": expenses.filter((t) => t.status === "auto-approved").length,
-    approved: expenses.filter((t) => t.status === "approved").length,
-    rejected: expenses.filter((t) => t.status === "rejected").length,
-  };
+  const configs = activeTab === "review" ? REVIEW_FILTERS_CONFIG : HISTORY_FILTERS_CONFIG;
+  const currentData = activeTab === "review" ? reviewData : historyData;
+
+  // Opsi dropdown: Pastikan "all" selalu ada di atas
+  const dropdownOptions = ["all", ...businessUnits.filter((d) => d !== "all")];
 
   return (
     <div
@@ -43,32 +50,40 @@ export function StatusFilterTabs({
         display: "flex",
         flexDirection: isMobile ? "column" : "row",
         gap: "6px",
-        flexWrap: isMobile ? "nowrap" : "wrap",
+        flexWrap: "wrap",
         background: "var(--card-bg)",
         border: "1px solid var(--card-b)",
         borderRadius: "14px",
         padding: "6px",
       }}
     >
-      {/* ── Status Tabs ──────────────────────────────────────────────────────── */}
+      {/* ── Status filters ─────────────────────────────────────────── */}
       <div
         style={{
           display: "flex",
           gap: "4px",
-          overflowX: isMobile ? "auto" : "visible",
-          flexWrap: isMobile ? "nowrap" : "wrap",
           flex: 1,
+          overflowX: isMobile ? "auto" : "visible",
           scrollbarWidth: "none",
-          msOverflowStyle: "none",
         }}
       >
-        {STATUS_ORDER.map((s) => {
-          const isActive = filterStatus === s;
-          const isAlert = s === "high-alert";
+        {configs.map((f) => {
+          const isActive =
+            activeTab === "review" ? reviewFilter === f.key : historyFilter === f.key;
+          const isAlert = f.key === "high-alert";
+          const count =
+            f.key === "all"
+              ? currentData.length
+              : currentData.filter((t) => t.status === f.key).length;
+
           return (
             <button
-              key={s}
-              onClick={() => onStatusChange(s)}
+              key={f.key}
+              onClick={() =>
+                activeTab === "review"
+                  ? onReviewFilterChange(f.key as ReviewFilter)
+                  : onHistoryFilterChange(f.key as HistoryFilter)
+              }
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -76,11 +91,10 @@ export function StatusFilterTabs({
                 padding: isMobile ? "6px 10px" : "7px 14px",
                 borderRadius: "10px",
                 border: "none",
-                fontSize: isMobile ? "11px" : "12px",
+                fontSize: "12px",
                 cursor: "pointer",
                 fontFamily: "'DM Sans', sans-serif",
                 fontWeight: isActive ? 500 : 400,
-                transition: "all 0.15s",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
                 background: isActive
@@ -89,9 +103,10 @@ export function StatusFilterTabs({
                     : "var(--em-subtle-2)"
                   : "transparent",
                 color: isActive ? (isAlert ? "#dc2626" : "var(--em)") : "var(--tm)",
+                transition: "all 0.15s",
               }}
             >
-              {FILTER_LABELS[s]}
+              {f.label}
               <span
                 style={{
                   fontSize: "10px",
@@ -106,25 +121,25 @@ export function StatusFilterTabs({
                   color: isActive ? (isAlert ? "#dc2626" : "var(--em)") : "var(--tm)",
                 }}
               >
-                {counts[s]}
+                {count}
               </span>
             </button>
           );
         })}
       </div>
 
-      {/* ── Custom Dept Dropdown ─────────────────────────────────────────────── */}
+      {/* ── Custom Select / Dropdown BU ────────────────────────────── */}
       <div
         style={{
           position: "relative",
           flexShrink: 0,
           alignSelf: isMobile ? "stretch" : "center",
-          width: isMobile ? "100%" : "200px",
+          width: isMobile ? "100%" : "200px", // Kasih lebar fix di desktop agar rapi
         }}
       >
         <div
-          onClick={() => setDeptOpen(!deptOpen)}
-          onBlur={() => setTimeout(() => setDeptOpen(false), 150)}
+          onClick={() => setBuOpen(!buOpen)}
+          onBlur={() => setTimeout(() => setBuOpen(false), 150)}
           tabIndex={0}
           style={{
             display: "flex",
@@ -132,25 +147,20 @@ export function StatusFilterTabs({
             justifyContent: "space-between",
             padding: "7px 14px",
             borderRadius: "10px",
-            border: deptOpen ? "1px solid var(--em)" : "1px solid var(--border)",
+            border: buOpen ? "1px solid var(--em)" : "1px solid var(--border)",
             background: "var(--surface-2)",
             color: "var(--ts)",
             fontSize: "12px",
             cursor: "pointer",
             fontFamily: "'DM Sans', sans-serif",
             outline: "none",
-            boxShadow: deptOpen ? "0 0 0 3px var(--em-subtle)" : "none",
+            boxShadow: buOpen ? "0 0 0 3px var(--em-subtle)" : "none",
             transition: "all 0.2s",
             userSelect: "none",
           }}
         >
-          <span
-            style={{
-              fontWeight: filterDept !== "all" ? 500 : 400,
-              color: filterDept !== "all" ? "var(--tp)" : "var(--ts)",
-            }}
-          >
-            {filterDept === "all" ? "Semua Departemen" : filterDept}
+          <span style={{ fontWeight: filterBU !== "all" ? 500 : 400, color: filterBU !== "all" ? "var(--tp)" : "var(--ts)" }}>
+            {filterBU === "all" ? "Semua Unit Bisnis" : filterBU}
           </span>
           <svg
             width="12"
@@ -159,9 +169,9 @@ export function StatusFilterTabs({
             fill="none"
             style={{
               transition: "transform 0.2s",
-              transform: deptOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transform: buOpen ? "rotate(180deg)" : "rotate(0deg)",
               flexShrink: 0,
-              color: "var(--tm)",
+              color: "var(--tm)"
             }}
           >
             <path
@@ -174,7 +184,8 @@ export function StatusFilterTabs({
           </svg>
         </div>
 
-        {deptOpen && (
+        {/* Dropdown Options */}
+        {buOpen && (
           <div
             style={{
               position: "absolute",
@@ -195,15 +206,16 @@ export function StatusFilterTabs({
             }}
           >
             {dropdownOptions.map((ind) => {
-              const label = ind === "all" ? "Semua Departemen" : ind;
-              const isSelected = filterDept === ind;
+              const label = ind === "all" ? "Semua Unit Bisnis" : ind;
+              const isSelected = filterBU === ind;
+
               return (
                 <div
                   key={ind}
                   onMouseDown={(e) => {
-                    e.preventDefault();
-                    onDeptChange(ind);
-                    setDeptOpen(false);
+                    e.preventDefault(); // Mencegah onBlur berjalan sebelum onClick
+                    onBUChange(ind);
+                    setBuOpen(false);
                   }}
                   style={{
                     padding: "8px 12px",

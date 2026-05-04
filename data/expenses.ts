@@ -168,6 +168,27 @@ export const mockExpenses: ExpenseTransaction[] = [
   },
 ];
 
+export const getFraudRiskConfig = (score: number) => {
+  if (score >= 70) return {
+    label: "High Risk — perlu tindakan segera",
+    color: "#ef4444",
+    bg: "rgba(239,68,68,0.07)",
+    border: "rgba(239,68,68,0.18)"
+  };
+  if (score >= 30) return {
+    label: "Medium Risk — perlu review",
+    color: "#f59e0b",
+    bg: "rgba(245,158,11,0.07)",
+    border: "rgba(245,158,11,0.18)"
+  };
+  return {
+    label: "Low Risk — aman",
+    color: "#10b981",
+    bg: "rgba(16,185,129,0.07)",
+    border: "rgba(16,185,129,0.18)"
+  };
+};
+
 export type StatusConfig = {
   label: string;
   bg: string;

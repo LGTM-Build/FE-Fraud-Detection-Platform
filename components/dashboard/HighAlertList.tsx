@@ -6,9 +6,9 @@ function HighAlertRow({ item, isLast }: { item: HighAlertItem; isLast: boolean }
   return (
     <div
       style={{
-        padding: "14px 20px",
+        padding: "12px 16px",
         borderBottom: isLast ? "none" : "1px solid var(--border)",
-        display: "flex", alignItems: "center", gap: "12px",
+        display: "flex", alignItems: "center", gap: "10px",
         cursor: "pointer", transition: "background 0.15s",
       }}
       onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--em-subtle)"}
@@ -16,7 +16,7 @@ function HighAlertRow({ item, isLast }: { item: HighAlertItem; isLast: boolean }
     >
       {/* Score circle */}
       <div style={{
-        width: "36px", height: "36px", borderRadius: "10px",
+        width: "34px", height: "34px", borderRadius: "10px",
         background: "rgba(239,68,68,0.10)",
         border: "1px solid rgba(239,68,68,0.20)",
         display: "flex", alignItems: "center", justifyContent: "center",
@@ -58,12 +58,15 @@ export default function HighAlertList() {
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
+      // On mobile/tablet, limit height so it doesn't get too tall in column layout
+      maxHeight: "420px",
     }}>
       {/* Header */}
       <div style={{
-        padding: "18px 20px",
+        padding: "16px",
         borderBottom: "1px solid var(--border)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexShrink: 0,
       }}>
         <div>
           <h3 style={{
@@ -86,7 +89,7 @@ export default function HighAlertList() {
         </span>
       </div>
 
-      {/* List */}
+      {/* List — scrollable if needed */}
       <div style={{ flex: 1, overflowY: "auto" }}>
         {HIGH_ALERT_ITEMS.map((item, i) => (
           <HighAlertRow
@@ -98,7 +101,7 @@ export default function HighAlertList() {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: "12px 20px", borderTop: "1px solid var(--border)" }}>
+      <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
         <a href="/dashboard/expense" style={{
           fontSize: "12px", color: "var(--em)",
           textDecoration: "none", fontWeight: 500,

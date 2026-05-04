@@ -13,12 +13,19 @@ export default function FraudTrendChart() {
       background: "var(--card-bg)",
       border: "1px solid var(--card-b)",
       borderRadius: "16px",
-      padding: "24px 24px 16px",
+      padding: "20px 16px 12px",
     }}>
+      <style>{`
+        @media (min-width: 480px) {
+          .chart-padding { padding: 24px 24px 16px !important; }
+        }
+      `}</style>
+
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "flex-start",
-        justifyContent: "space-between", marginBottom: "24px", gap: "12px",
+        justifyContent: "space-between", marginBottom: "20px", gap: "12px",
+        flexWrap: "wrap",
       }}>
         <div>
           <h3 style={{
@@ -67,17 +74,17 @@ export default function FraudTrendChart() {
       </div>
 
       {/* Legend */}
-      <div style={{ display: "flex", gap: "20px", marginBottom: "16px" }}>
+      <div style={{ display: "flex", gap: "16px", marginBottom: "12px", flexWrap: "wrap" }}>
         {chartLegend.map(l => (
           <div key={l.key} style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-            <span style={{ width: "24px", height: "3px", borderRadius: "2px", background: l.color, display: "block" }} />
+            <span style={{ width: "20px", height: "3px", borderRadius: "2px", background: l.color, display: "block", flexShrink: 0 }} />
             <span style={{ fontSize: "12px", color: "var(--ts)" }}>{l.label}</span>
           </div>
         ))}
       </div>
 
       {/* Chart */}
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={200}>
         <AreaChart data={data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
           <defs>
             <linearGradient id="gradExpense" x1="0" y1="0" x2="0" y2="1">
@@ -90,8 +97,15 @@ export default function FraudTrendChart() {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-          <XAxis dataKey="period" tick={{ fontSize: 11, fill: "var(--tm)", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} dy={8} />
-          <YAxis tick={{ fontSize: 11, fill: "var(--tm)", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} />
+          <XAxis
+            dataKey="period"
+            tick={{ fontSize: 10, fill: "var(--tm)", fontFamily: "DM Sans" }}
+            axisLine={false}
+            tickLine={false}
+            dy={8}
+            interval="preserveStartEnd"
+          />
+          <YAxis tick={{ fontSize: 10, fill: "var(--tm)", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} />
           <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
           <Area type="monotone" dataKey="expense" stroke="#10b981" strokeWidth={2} fill="url(#gradExpense)" dot={false} activeDot={{ r: 5, fill: "#10b981", stroke: "var(--bg)", strokeWidth: 2 }} />
           <Area type="monotone" dataKey="procurement" stroke="#6ee7b7" strokeWidth={2} fill="url(#gradProcurement)" dot={false} activeDot={{ r: 5, fill: "#6ee7b7", stroke: "var(--bg)", strokeWidth: 2 }} />

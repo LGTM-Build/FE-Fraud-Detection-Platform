@@ -182,7 +182,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     <aside style={{
       width: collapsed ? "64px" : "220px",
       height: "100vh",
-      background: "var(--footer-cta-bg)",
+      background: "var(--bg)",
       borderRight: "1px solid var(--border)",
       display: "flex", flexDirection: "column",
       flexShrink: 0,
@@ -192,7 +192,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     }}>
       <style>{`
         [data-theme="light"] aside {
-          background: linear-gradient(160deg, #ffffff 60%, rgba(16,185,129,0.06) 100%) !important;
+          background: #ffffff !important;
         }
         .nav-item {
           display: flex; align-items: center; gap: 10px;

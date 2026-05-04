@@ -11,12 +11,12 @@ interface ReportPreviewProps {
   generateState: GenerateState;
   onGenerate: () => void;
   onReset: () => void;
+  isNarrow?: boolean;
 }
 
 export function ReportPreview({
   reportType, scope, periodStart, periodEnd, format,
-  includeCharts, includeRaw,
-  generateState, onGenerate, onReset,
+  includeCharts, includeRaw, generateState, onGenerate, onReset, isNarrow,
 }: ReportPreviewProps) {
   const contents = [
     "Ringkasan eksekutif",
@@ -30,10 +30,10 @@ export function ReportPreview({
   ].filter(Boolean) as string[];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px", position: "sticky", top: "88px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px", position: isNarrow ? "static" : "sticky", top: "88px" }}>
 
       {/* Preview card */}
-      <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-b)", borderRadius: "16px", padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-b)", borderRadius: "16px", padding: isNarrow ? "16px" : "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
         <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--tm)", textTransform: "uppercase", letterSpacing: "0.8px" }}>Preview Laporan</div>
 
         {/* Mock cover */}
@@ -59,7 +59,7 @@ export function ReportPreview({
                 { label: "Cakupan", value: scopeLabels[scope] },
                 { label: "Periode", value: `${periodStart} – ${periodEnd}` },
                 { label: "Format",  value: format.toUpperCase() },
-              ].map((r) => (
+              ].map(r => (
                 <div key={r.label} style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontSize: "10px", color: "rgba(232,245,238,0.40)" }}>{r.label}</span>
                   <span style={{ fontSize: "10px", color: "rgba(232,245,238,0.75)", fontWeight: 500 }}>{r.value}</span>
@@ -69,13 +69,13 @@ export function ReportPreview({
           </div>
         </div>
 
-        {/* Contents list */}
+        {/* Contents */}
         <div>
           <div style={{ fontSize: "11px", color: "var(--tm)", marginBottom: "8px" }}>Akan disertakan:</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {contents.map((item) => (
+          <div style={{ display: isNarrow ? "grid" : "flex", gridTemplateColumns: isNarrow ? "1fr 1fr" : undefined, flexDirection: isNarrow ? undefined : "column", gap: "6px" }}>
+            {contents.map(item => (
               <div key={item} style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "12px", color: "var(--ts)" }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--em)" strokeWidth="2.5" strokeLinecap="round">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--em)" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 {item}
@@ -85,26 +85,24 @@ export function ReportPreview({
         </div>
       </div>
 
-      {/* Generate / state buttons */}
       <GenerateButton state={generateState} format={format} onGenerate={onGenerate} onReset={onReset} />
     </div>
   );
 }
 
-// ─── Sub-component ───────────────────────────────────────────
-
 function GenerateButton({ state, format, onGenerate, onReset }: {
-  state: GenerateState;
-  format: ReportFormat;
-  onGenerate: () => void;
-  onReset: () => void;
+  state: GenerateState; format: ReportFormat; onGenerate: () => void; onReset: () => void;
 }) {
   if (state === "idle") return (
-    <button
-      onClick={onGenerate}
-      style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, var(--em), var(--em2))", color: "#fff", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 4px 20px rgba(16,185,129,0.30)", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(16,185,129,0.40)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(16,185,129,0.30)"; }}
+    <button onClick={onGenerate} style={{
+      width: "100%", padding: "14px", borderRadius: "12px", border: "none",
+      background: "linear-gradient(135deg, var(--em), var(--em2))",
+      color: "#fff", fontSize: "14px", fontWeight: 500, cursor: "pointer",
+      fontFamily: "'DM Sans', sans-serif", boxShadow: "0 4px 20px rgba(16,185,129,0.30)",
+      transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+    }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(16,185,129,0.40)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(16,185,129,0.30)"; }}
     >
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>

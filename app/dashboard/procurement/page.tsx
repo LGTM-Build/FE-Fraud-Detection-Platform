@@ -5,6 +5,7 @@ import {
   MOCK_DATA,
   HAS_DATA,
   REVIEW_STATUSES,
+  PENDING_STATUSES,
   HISTORY_STATUSES,
   type ViewTab,
   type ReviewFilter,
@@ -44,20 +45,36 @@ export default function ProcurementPage() {
 
   // ── Data split ────────────────────────────────────────────────────────────────
   const reviewData  = MOCK_DATA.filter(t => REVIEW_STATUSES.includes(t.status));
+  const pendingData = MOCK_DATA.filter(t => PENDING_STATUSES.includes(t.status));
   const historyData = MOCK_DATA.filter(t => HISTORY_STATUSES.includes(t.status));
-  const businessUnits = ["all", ...Array.from(new Set(MOCK_DATA.map(t => t.businessUnit)))];
+  const businessUnits = [
+    "all",
+    ...Array.from(
+      new Set(
+        MOCK_DATA
+          .map((t) => (t as { businessUnit?: string }).businessUnit)
+          .filter(Boolean) as string[]
+      )
+    ),
+  ];
 
   // ── Filtered ──────────────────────────────────────────────────────────────────
   const applyBU = (data: ProcurementTransaction[]) =>
-    filterBU === "all" ? data : data.filter(t => t.businessUnit === filterBU);
+    filterBU === "all"
+      ? data
+      : data.filter(
+          (t) =>
+            (t as { businessUnit?: string }).businessUnit === filterBU
+        );
 
   const filteredReview  = applyBU(
     reviewFilter === "all" ? reviewData : reviewData.filter(t => t.status === reviewFilter)
   );
+  const filteredPending = applyBU(pendingData);
   const filteredHistory = applyBU(
     historyFilter === "all" ? historyData : historyData.filter(t => t.status === historyFilter)
   );
-  const activeData = activeTab === "review" ? filteredReview : filteredHistory;
+  const activeData = activeTab === "review" ? filteredReview : activeTab === "history" ? filteredHistory : filteredPending;
 
   return (
     <>
@@ -133,12 +150,12 @@ export default function ProcurementPage() {
         <ProcurementViewTabs
           activeTab={activeTab}
           reviewCount={reviewData.length}
+          pendingCount={pendingData.length}
           historyCount={historyData.length}
-          onTabChange={setActiveTab}
-        />
+          onTabChange={setActiveTab} />
 
         {/* ── Filter Bar ──────────────────────────────────────────────────────── */}
-        {HAS_DATA && (
+        {HAS_DATA && activeTab !== "pending" && (
           <ProcurementFilterBar
             activeTab={activeTab}
             reviewFilter={reviewFilter}

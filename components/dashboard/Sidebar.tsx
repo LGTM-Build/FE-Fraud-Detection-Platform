@@ -88,6 +88,14 @@ const Icons = {
       <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
     </svg>
   ),
+  teams: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
   chevronDown: (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
       <polyline points="6 9 12 15 18 9"/>
@@ -119,16 +127,7 @@ const navGroups: NavGroup[] = [
     group: "Sistem",
     roles: ["super_user", "super_admin"],
     items: [
-      {
-        label: "Pengaturan",
-        href: "/dashboard/settings",
-        icon: Icons.settings,
-        roles: ["super_user", "super_admin"],
-        subItems: [
-          { label: "Umum",         href: "/dashboard/settings" },
-          { label: "Manajemen Tim", href: "/dashboard/settings/team" },
-        ],
-      },
+      { label: "Manajemen Tim", href: "/dashboard/teams",       icon: Icons.teams,       roles: ["super_user", "super_admin"] },
     ],
   },
 ];

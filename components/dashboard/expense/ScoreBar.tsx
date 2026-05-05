@@ -1,12 +1,5 @@
-import { getFraudRiskConfig } from "@/data/expenses";
-
-interface ScoreBarProps {
-  score: number;
-}
-
-export function ScoreBar({ score }: ScoreBarProps) {
-  const risk = getFraudRiskConfig(score);
-
+export default function ScoreBar({ score }: { score: number }) {
+  const color = score >= 70 ? "#ef4444" : score >= 30 ? "#f59e0b" : "#10b981";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
       <div
@@ -16,14 +9,13 @@ export function ScoreBar({ score }: ScoreBarProps) {
           borderRadius: "2px",
           background: "var(--border)",
           overflow: "hidden",
-          flexShrink: 0,
         }}
       >
         <div
           style={{
             width: `${score}%`,
             height: "100%",
-            background: risk.color,
+            background: color,
             borderRadius: "2px",
           }}
         />
@@ -32,7 +24,7 @@ export function ScoreBar({ score }: ScoreBarProps) {
         style={{
           fontSize: "12px",
           fontWeight: 600,
-          color: risk.color,
+          color,
           minWidth: "24px",
         }}
       >

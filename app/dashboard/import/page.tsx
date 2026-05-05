@@ -13,7 +13,7 @@ import { usePageTitle } from "@/contexts/TopBarContext";
 export default function ImportCenterPage() {
 
   usePageTitle({
-    title: "Import Center",
+    title: "Pusat Impor",
   });
 
   const [step, setStep] = useState<Step>("upload");

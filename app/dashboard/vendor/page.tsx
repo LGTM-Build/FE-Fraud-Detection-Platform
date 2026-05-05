@@ -9,7 +9,7 @@ import { VendorDetail } from "@/components/dashboard/vendor/VendorDetail";
 import { usePageTitle } from "@/contexts/TopBarContext";
 
 export default function VendorIntelligencePage() {
-  usePageTitle({ title: "Vendor" });
+  usePageTitle({ title: "Info Vendor" });
 
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");

@@ -13,13 +13,12 @@ const roleDisplay: Record<Role, { label: string; color: string; bg: string; bord
   super_admin:     { label: "Super Admin",     color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
   auditor:        { label: "Auditor",        color: "var(--em)", bg: "var(--em-subtle)",      border: "rgba(16,185,129,0.20)" },
   operator:       { label: "Operator",       color: "#d97706", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.20)" },
-  department_head: { label: "Department Head", color: "#7c3aed", bg: "rgba(124,58,237,0.08)", border: "rgba(124,58,237,0.20)" },
+  department_head: { label: "Kepala Dept", color: "#7c3aed", bg: "rgba(124,58,237,0.08)", border: "rgba(124,58,237,0.20)" },
 };
 
 interface NavItem {
   label: string;
   href: string;
-  badge?: number;
   icon: React.ReactNode;
   roles: Role[];
   subItems?: { label: string; href: string }[];
@@ -63,6 +62,14 @@ const Icons = {
       <path d="M6 6l4 4M14 14l4 4M18 6l-4 4M10 14l-4 4"/>
     </svg>
   ),
+  employee: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
   report: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -93,18 +100,19 @@ const navGroups: NavGroup[] = [
     group: "Monitor",
     roles: ["super_user", "super_admin", "auditor", "operator", "department_head"],
     items: [
-      { label: "Dashboard",          href: "/dashboard",             icon: Icons.dashboard,   roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
-      { label: "Expense Monitor",    href: "/dashboard/expense",     icon: Icons.expense,     roles: ["super_user", "super_admin", "auditor", "operator", "department_head"], badge: 12 },
-      { label: "Procurement",        href: "/dashboard/procurement", icon: Icons.procurement, roles: ["super_user", "super_admin", "auditor", "operator", "department_head"], badge: 5 },
-      { label: "Vendor Intelligence",href: "/dashboard/vendor",      icon: Icons.vendor,      roles: ["super_user", "super_admin", "auditor", "department_head"] },
+      { label: "Beranda",          href: "/dashboard",             icon: Icons.dashboard,   roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
+      { label: "Pengeluaran",    href: "/dashboard/expense",     icon: Icons.expense,     roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
+      { label: "Pengadaan",        href: "/dashboard/procurement", icon: Icons.procurement, roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
+      { label: "Info Vendor",href: "/dashboard/vendor",      icon: Icons.vendor,      roles: ["super_user", "super_admin", "auditor", "department_head"] },
     ],
   },
   {
     group: "Operasional",
     roles: ["super_user", "super_admin", "auditor", "operator", "department_head"],
     items: [
-      { label: "Report Generator", href: "/dashboard/report",  icon: Icons.report,  roles: ["super_user", "super_admin", "auditor", "department_head"] },
-      { label: "Import Center",    href: "/dashboard/import",  icon: Icons.import,  roles: ["super_user", "super_admin", "operator", "department_head"] },
+      { label: "Karyawan",         href: "/dashboard/employee", icon: Icons.employee, roles: ["super_user", "super_admin", "operator", "department_head"] },
+      { label: "Laporan", href: "/dashboard/report",  icon: Icons.report,  roles: ["super_user", "super_admin", "auditor", "department_head"] },
+      { label: "Pusat Impor",    href: "/dashboard/import",  icon: Icons.import,  roles: ["super_user", "super_admin", "operator", "department_head"] },
     ],
   },
   {
@@ -112,13 +120,13 @@ const navGroups: NavGroup[] = [
     roles: ["super_user", "super_admin"],
     items: [
       {
-        label: "Settings",
+        label: "Pengaturan",
         href: "/dashboard/settings",
         icon: Icons.settings,
         roles: ["super_user", "super_admin"],
         subItems: [
-          { label: "General",         href: "/dashboard/settings" },
-          { label: "Team Management", href: "/dashboard/settings/team" },
+          { label: "Umum",         href: "/dashboard/settings" },
+          { label: "Manajemen Tim", href: "/dashboard/settings/team" },
         ],
       },
     ],
@@ -195,14 +203,6 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         .nav-item:hover { background: var(--em-subtle); color: var(--tp); }
         .nav-item.active { background: var(--em-subtle-2); color: var(--em); font-weight: 500; }
         .nav-item.active svg { stroke: var(--em); }
-        .nav-badge {
-          margin-left: auto; min-width: 18px; height: 18px;
-          border-radius: 100px; background: rgba(16,185,129,0.12);
-          color: var(--em); font-size: 10px; font-weight: 600;
-          display: flex; align-items: center; justify-content: center;
-          padding: 0 5px; flex-shrink: 0;
-          border: 1px solid rgba(16,185,129,0.20);
-        }
         .nav-group-label {
           font-size: 10px; font-weight: 600; text-transform: uppercase;
           letter-spacing: 1.2px; color: var(--tm);
@@ -225,44 +225,36 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           cursor: pointer; color: var(--tm); transition: all 0.15s; flex-shrink: 0;
         }
         .collapse-btn:hover { border-color: var(--em); color: var(--em); background: var(--em-subtle); }
-        .profile-trigger {
-          display: flex; align-items: center; gap: 10px;
-          padding: 8px 10px; border-radius: 10px; cursor: pointer;
-          transition: background 0.15s; border: none; background: transparent;
-          width: 100%; text-align: left; font-family: "DM Sans", sans-serif;
-        }
-        .profile-trigger:hover { background: var(--em-subtle); }
       `}</style>
 
-      {/* Logo — 64px exact */}
+      {/* Header & Collapse Toggle */}
       <div style={{
         height: "64px", borderBottom: "1px solid var(--border)",
         display: "flex", alignItems: "center",
-        padding: collapsed ? "0 17px" : "0 14px",
+        padding: collapsed ? "0" : "0 14px",
         gap: "10px", flexShrink: 0,
         justifyContent: collapsed ? "center" : "flex-start",
       }}>
-        <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 14px rgba(16,185,129,0.25)" }}>
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.4" opacity="0.4"/>
-            <path d="M6 10.5l3 3L14.5 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        {!collapsed && (
-          <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "17px", color: "var(--tp)", letterSpacing: "-0.4px", flex: 1 }}>
-            Fradara
-          </span>
-        )}
-        {!collapsed && (
-          <button className="collapse-btn" onClick={() => setCollapsed(true)} title="Tutup sidebar">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        {collapsed ? (
+          // Hanya tampilkan tombol expand saat dilipat agar rapi di tengah
+          <button className="collapse-btn" onClick={() => setCollapsed(false)} title="Buka sidebar" style={{ width: "32px", height: "32px", borderRadius: "10px" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
-        )}
-        {collapsed && (
-          <button className="collapse-btn" onClick={() => setCollapsed(false)} title="Buka sidebar"
-            style={{ position: "absolute", bottom: "76px", left: "50%", transform: "translateX(-50%)" }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
+        ) : (
+          <>
+            <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 14px rgba(16,185,129,0.25)" }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.4" opacity="0.4"/>
+                <path d="M6 10.5l3 3L14.5 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "17px", color: "var(--tp)", letterSpacing: "-0.4px", flex: 1 }}>
+              Fradara
+            </span>
+            <button className="collapse-btn" onClick={() => setCollapsed(true)} title="Tutup sidebar">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+          </>
         )}
       </div>
 
@@ -273,7 +265,11 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
             {!collapsed && <div className="nav-group-label">{group.group}</div>}
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {group.items.map(item => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                // Perbaikan deteksi aktif khusus untuk "Beranda" / "/dashboard"
+                const isActive = item.href === "/dashboard" 
+                  ? pathname === "/dashboard" 
+                  : pathname === item.href || pathname.startsWith(item.href + "/");
+                
                 const hasSubItems = !!item.subItems?.length;
 
                 if (hasSubItems) {
@@ -319,8 +315,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
                   >
                     <span style={{ flexShrink: 0 }}>{item.icon}</span>
                     {!collapsed && <span>{item.label}</span>}
-                    {!collapsed && item.badge && <span className="nav-badge">{item.badge}</span>}
-                    {item.badge && collapsed && (
+                    {collapsed && isActive && (
                       <span style={{ position: "absolute", top: "6px", right: "8px", width: "6px", height: "6px", borderRadius: "50%", background: "var(--em)" }} />
                     )}
                   </Link>
@@ -370,7 +365,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         <button
           onClick={handleLogout}
           disabled={loggingOut}
-          title={collapsed ? "Logout" : undefined}
+          title={collapsed ? "Keluar" : undefined}
           style={{
             display: "flex", alignItems: "center", gap: "10px",
             padding: "8px 12px", borderRadius: "10px",
@@ -394,7 +389,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          {!collapsed && <span>{loggingOut ? "Keluar..." : "Logout"}</span>}
+          {!collapsed && <span>{loggingOut ? "Keluar..." : "Keluar"}</span>}
         </button>
       </div>
     </aside>

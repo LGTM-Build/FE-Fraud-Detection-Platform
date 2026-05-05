@@ -12,7 +12,7 @@ import { usePageTitle } from "@/contexts/TopBarContext";
 export default function SettingsPage() {
 
    usePageTitle({
-    title: "Settings",
+    title: "Pengaturan",
   });
 
   const [tab, setTab] = useState<Tab>("users");

@@ -70,7 +70,7 @@ export default function ProcurementFilterBar({
         {configs.map((f) => {
           const isActive =
             activeTab === "review" ? reviewFilter === f.key : historyFilter === f.key;
-          const isAlert = f.key === "high-alert";
+          const isAlert = f.key === "high_alert";
           const count =
             f.key === "all"
               ? currentData.length
@@ -107,22 +107,24 @@ export default function ProcurementFilterBar({
               }}
             >
               {f.label}
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  padding: "1px 6px",
-                  borderRadius: "100px",
-                  background: isActive
-                    ? isAlert
-                      ? "rgba(239,68,68,0.15)"
-                      : "var(--em-subtle-2)"
-                    : "var(--surface-2)",
-                  color: isActive ? (isAlert ? "#dc2626" : "var(--em)") : "var(--tm)",
-                }}
-              >
-                {count}
-              </span>
+              {count > 0 && (
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    padding: "1px 6px",
+                    borderRadius: "100px",
+                    background: isActive
+                      ? isAlert
+                        ? "rgba(239,68,68,0.15)"
+                        : "var(--em-subtle-2)"
+                      : "var(--surface-2)",
+                    color: isActive ? (isAlert ? "#dc2626" : "var(--em)") : "var(--tm)",
+                  }}
+                >
+                  {count}
+                </span>
+              )}
             </button>
           );
         })}

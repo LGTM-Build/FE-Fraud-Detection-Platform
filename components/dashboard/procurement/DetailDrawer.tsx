@@ -13,18 +13,17 @@ interface DetailModalProps {
   // TODO integrasi: sambungkan ke PATCH /api/procurement-transactions/:id/status
   onApprove?: (id: string) => Promise<void>;
   onReject?: (id: string) => Promise<void>;
-  onEscalate?: (id: string) => Promise<void>;
 }
 
-export function DetailModal({ tx, onClose, isMobile, onApprove, onReject, onEscalate }: DetailModalProps) {
+export function DetailModal({ tx, onClose, isMobile, onApprove, onReject }: DetailModalProps) {
   const sc   = statusConfig[tx.status];
   const risk = getFraudRiskConfig(tx.fraudScore);
   const canAct = tx.status === "alert" || tx.status === "high_alert";
 
-  const [actionLoading, setActionLoading] = useState<"approve" | "reject" | "escalate" | null>(null);
+  const [actionLoading, setActionLoading] = useState<"approve" | "reject" | null>(null);
 
-  const handleAction = async (type: "approve" | "reject" | "escalate") => {
-    const fn = type === "approve" ? onApprove : type === "reject" ? onReject : onEscalate;
+  const handleAction = async (type: "approve" | "reject") => {
+    const fn = type === "approve" ? onApprove : type === "reject" ? onReject : undefined;
     if (!fn) return;
     setActionLoading(type);
     try { await fn(tx.id); onClose(); }
@@ -60,7 +59,7 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject, onEsca
           <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
             <MobileBody tx={tx} risk={risk} detailRows={detailRows} sc={sc} />
           </div>
-          {canAct && <ModalActions isMobile onApprove={() => handleAction("approve")} onReject={() => handleAction("reject")} onEscalate={() => handleAction("escalate")} actionLoading={actionLoading} />}
+          {canAct && <ModalActions isMobile onApprove={() => handleAction("approve")} onReject={() => handleAction("reject")} actionLoading={actionLoading} />}
         </div>
       ) : (
         <div style={{ position: "fixed", inset: 0, zIndex: 201, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", pointerEvents: "none" }}>
@@ -151,7 +150,7 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject, onEsca
                 </div>
               </div>
             </div>
-            {canAct && <ModalActions onApprove={() => handleAction("approve")} onReject={() => handleAction("reject")} onEscalate={() => handleAction("escalate")} actionLoading={actionLoading} />}
+            {canAct && <ModalActions onApprove={() => handleAction("approve")} onReject={() => handleAction("reject")} actionLoading={actionLoading} />}
           </div>
         </div>
       )}
@@ -165,8 +164,8 @@ function DesktopHeader({ tx, sc, onClose }: Readonly<{ tx: ProcurementTransactio
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
           <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--em)" }}>{tx.purchaseId ?? tx.id.slice(0, 8)}</span>
-          <span style={{ fontSize: "12px", color: "var(--tm)" }}>{fmtDate(tx.purchaseDate)}</span>
-          <span style={{ padding: "2px 10px", borderRadius: "100px", background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, fontSize: "11px", fontWeight: 500 }}>{sc.label}</span>
+          {/* <span style={{ fontSize: "12px", color: "var(--tm)" }}>{fmtDate(tx.purchaseDate)}</span> */}
+          {/* <span style={{ padding: "2px 10px", borderRadius: "100px", background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, fontSize: "11px", fontWeight: 500 }}>{sc.label}</span> */}
         </div>
         <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--tp)", letterSpacing: "-0.4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {tx.itemDescription}
@@ -262,12 +261,11 @@ function MobileBody({ tx, risk, detailRows, sc }: { tx: ProcurementTransaction; 
   );
 }
 
-function ModalActions({ isMobile, onApprove, onReject, onEscalate, actionLoading }: {
+function ModalActions({ isMobile, onApprove, onReject, actionLoading }: {
   isMobile?: boolean;
   onApprove: () => void;
   onReject: () => void;
-  onEscalate: () => void;
-  actionLoading: "approve" | "reject" | "escalate" | null;
+  actionLoading: "approve" | "reject" | null;
 }) {
   return (
     <div style={{ padding: isMobile ? "16px" : "20px 28px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "8px", background: "var(--surface-2)", flexShrink: 0 }}>
@@ -280,10 +278,6 @@ function ModalActions({ isMobile, onApprove, onReject, onEscalate, actionLoading
         <button onClick={onReject} disabled={actionLoading !== null}
           style={{ flex: 1, padding: isMobile ? "10px" : "11px", borderRadius: "10px", border: "1px solid rgba(239,68,68,0.30)", background: "rgba(239,68,68,0.06)", color: "#dc2626", fontSize: "13px", fontWeight: 500, cursor: actionLoading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: actionLoading ? 0.6 : 1 }}>
           {actionLoading === "reject" ? "Menyimpan..." : "✕ Tolak"}
-        </button>
-        <button onClick={onEscalate} disabled={actionLoading !== null}
-          style={{ padding: isMobile ? "10px 14px" : "11px 18px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg)", color: "var(--ts)", fontSize: "13px", fontWeight: 400, cursor: actionLoading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: actionLoading ? 0.6 : 1 }}>
-          {actionLoading === "escalate" ? "..." : "↑ Eskalasi"}
         </button>
       </div>
     </div>

@@ -36,21 +36,23 @@ export default function ProcurementViewTabs({
             marginBottom: "-1px", transition: "all 0.15s",
           }}>
             {tab.label}
-            <span style={{
-              fontSize: "10px", fontWeight: 600, padding: "1px 7px", borderRadius: "100px",
-              background: isAlert && isActive
-                ? "rgba(239,68,68,0.12)"
-                : isPending && isActive
-                ? "rgba(99,102,241,0.12)"
-                : isActive ? "var(--em-subtle)" : "var(--surface-2)",
-              color: isAlert && isActive
-                ? "#dc2626"
-                : isPending && isActive
-                ? "#6366f1"
-                : isActive ? "var(--em)" : "var(--tm)",
-            }}>
-              {count}
-            </span>
+            {count > 0 && (
+                <span style={{
+                  fontSize: "10px", fontWeight: 600, padding: "1px 7px", borderRadius: "100px",
+                  background: isAlert && isActive
+                      ? "rgba(239,68,68,0.12)"
+                      : isPending && isActive
+                      ? "rgba(99,102,241,0.12)"
+                      : isActive ? "var(--em-subtle)" : "var(--surface-2)",
+                  color: isAlert && isActive
+                      ? "#dc2626"
+                      : isPending && isActive
+                      ? "#6366f1"
+                      : isActive ? "var(--em)" : "var(--tm)",
+                  }}>
+                    {count}
+                </span>
+            )}
           </button>
         );
       })}

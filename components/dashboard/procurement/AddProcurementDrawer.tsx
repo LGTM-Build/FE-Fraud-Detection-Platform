@@ -13,7 +13,7 @@ export function AddProcurementDrawer({ isOpen, onClose, isMobile, onSuccess }: A
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    employeeId: "", // Tambahan state employeeId
+    employeeId: "",
     vendorName: "",
     itemDescription: "",
     department: "",
@@ -22,7 +22,6 @@ export function AddProcurementDrawer({ isOpen, onClose, isMobile, onSuccess }: A
     procurementMethod: "pengadaan_langsung",
   });
 
-  // Tarik data karyawan saat drawer dibuka
   useEffect(() => {
     if (isOpen) {
       getEmployees()
@@ -33,7 +32,7 @@ export function AddProcurementDrawer({ isOpen, onClose, isMobile, onSuccess }: A
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> | any) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -44,14 +43,12 @@ export function AddProcurementDrawer({ isOpen, onClose, isMobile, onSuccess }: A
     try {
       const isoDate = new Date(formData.purchaseDate).toISOString();
       
-      // 1. Siapkan payload
       const payload: any = {
         ...formData,
         amountTotal: Number(formData.amountTotal),
         purchaseDate: isoDate,
       };
 
-      // 2. JIKA KOSONG: Set jadi null agar backend tidak teriak "Invalid UUID"
       if (!payload.employeeId || payload.employeeId === "") {
         payload.employeeId = null; 
       }
@@ -120,12 +117,20 @@ export function AddProcurementDrawer({ isOpen, onClose, isMobile, onSuccess }: A
               <form id="procurement-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
                 <div>
                   <label style={labelStyle}>Karyawan Pengaju (Opsional)</label>
-                  <select name="employeeId" className="add-input" value={formData.employeeId} onChange={handleChange} style={inputStyle}>
-                    <option value="">-- Pilih Karyawan --</option>
-                    {employees.map((emp: any) => (
-                      <option key={emp.id} value={emp.id}>{emp.fullName} ({emp.department ?? "No Dept"})</option>
-                    ))}
-                  </select>
+                  <CustomSelect
+                    name="employeeId"
+                    value={formData.employeeId}
+                    onChange={handleChange}
+                    placeholder="-- Pilih Karyawan --"
+                    style={inputStyle}
+                    options={[
+                      { value: "", label: "-- Pilih Karyawan --" },
+                      ...employees.map((emp: any) => ({
+                        value: emp.id,
+                        label: `${emp.fullName} (${emp.department ?? "No Dept"})`,
+                      })),
+                    ]}
+                  />
                 </div>
                 <div><label style={labelStyle}>Nama Vendor</label><input required className="add-input" name="vendorName" value={formData.vendorName} onChange={handleChange} style={inputStyle} placeholder="Contoh: PT Teknologi Terdepan" /></div>
                 <div><label style={labelStyle}>Deskripsi Item</label><textarea required className="add-input" name="itemDescription" value={formData.itemDescription} onChange={handleChange} rows={3} style={{ ...inputStyle, resize: "none" }} placeholder="Contoh: Pengadaan 10 unit laptop..." /></div>
@@ -134,14 +139,21 @@ export function AddProcurementDrawer({ isOpen, onClose, isMobile, onSuccess }: A
                   <div><label style={labelStyle}>Tanggal Pembelian</label><input required type="date" className="add-input" name="purchaseDate" value={formData.purchaseDate} onChange={handleChange} style={inputStyle} /></div>
                 </div>
                 <div><label style={labelStyle}>Metode Pengadaan</label>
-                  <select name="procurementMethod" className="add-input" value={formData.procurementMethod} onChange={handleChange} style={inputStyle}>
-                    <option value="pengadaan_langsung">Pengadaan Langsung</option>
-                    <option value="tender_terbuka">Tender Terbuka</option>
-                    <option value="tender_tertutup">Tender Tertutup</option>
-                    <option value="e_purchasing">E-Purchasing</option>
-                    <option value="rfp">RFP</option>
-                    <option value="lainnya">Lainnya</option>
-                  </select>
+                  <CustomSelect
+                    name="procurementMethod"
+                    value={formData.procurementMethod}
+                    onChange={handleChange}
+                    placeholder="-- Pilih Metode --"
+                    style={inputStyle}
+                    options={[
+                      { value: "pengadaan_langsung", label: "Pengadaan Langsung" },
+                      { value: "tender_terbuka", label: "Tender Terbuka" },
+                      { value: "tender_tertutup", label: "Tender Tertutup" },
+                      { value: "e_purchasing", label: "E-Purchasing" },
+                      { value: "rfp", label: "RFP" },
+                      { value: "lainnya", label: "Lainnya" },
+                    ]}
+                  />
                 </div>
                 <div><label style={labelStyle}>Total Nilai (Rp)</label><input required type="number" className="add-input" name="amountTotal" value={formData.amountTotal} onChange={handleChange} style={inputStyle} placeholder="Contoh: 150000000" /></div>
               </form>
@@ -174,10 +186,20 @@ function MobileContent({ formData, loading, employees, labelStyle, inputStyle, h
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px" }}>
         <form id="procurement-form-mobile" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div><label style={labelStyle}>Karyawan Pengaju</label>
-            <select name="employeeId" value={formData.employeeId} onChange={handleChange} style={inputStyle}>
-              <option value="">-- Pilih Karyawan --</option>
-              {employees.map((emp: any) => <option key={emp.id} value={emp.id}>{emp.fullName}</option>)}
-            </select>
+            <CustomSelect
+              name="employeeId"
+              value={formData.employeeId}
+              onChange={handleChange}
+              placeholder="-- Pilih Karyawan --"
+              style={inputStyle}
+              options={[
+                { value: "", label: "-- Pilih Karyawan --" },
+                ...employees.map((emp: any) => ({
+                  value: emp.id,
+                  label: emp.fullName,
+                })),
+              ]}
+            />
           </div>
           <div><label style={labelStyle}>Nama Vendor</label><input required name="vendorName" value={formData.vendorName} onChange={handleChange} style={inputStyle} /></div>
           <div><label style={labelStyle}>Deskripsi Item</label><textarea required name="itemDescription" value={formData.itemDescription} onChange={handleChange} rows={3} style={{ ...inputStyle, resize: "none" }} /></div>
@@ -194,5 +216,91 @@ function MobileContent({ formData, loading, employees, labelStyle, inputStyle, h
         <button type="submit" form="procurement-form-mobile" disabled={loading} style={{ flex: 1, padding: "10px", borderRadius: "10px", border: "none", background: loading ? "var(--surface-2)" : "linear-gradient(135deg, var(--em), var(--em2))", color: loading ? "var(--tm)" : "#fff", fontSize: "13px", fontWeight: 500, cursor: loading ? "not-allowed" : "pointer", boxShadow: loading ? "none" : "0 4px 16px rgba(16,185,129,0.25)" }}>{loading ? "Menyimpan..." : "Simpan"}</button>
       </div>
     </>
+  );
+}
+
+function CustomSelect({ name, value, options, onChange, placeholder, style }: any) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+
+  const selectedOption = options.find((o: any) => o.value === value);
+
+  return (
+    <div 
+      style={{ position: "relative", width: "100%", outline: "none" }}
+      tabIndex={0}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          setIsOpen(false);
+        }
+      }}
+    >
+      <div
+        className="add-input"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          ...style,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span style={{ color: value ? "var(--tp)" : "var(--tm)" }}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+
+      {isOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            left: 0,
+            right: 0,
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
+            borderRadius: "10px",
+            zIndex: 100,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            maxHeight: "220px",
+            overflowY: "auto",
+          }}
+        >
+          {options.map((opt: any) => {
+            const isSelected = value === opt.value;
+            const isHovered = hoveredOption === opt.value;
+
+            return (
+              <div
+                key={opt.value}
+                style={{
+                  padding: "10px 14px",
+                  fontSize: "13px",
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontWeight: isSelected ? 500 : 300,
+                  color: isSelected || isHovered ? "var(--em)" : "var(--tp)",
+                  background: isSelected || isHovered ? "var(--em-subtle)" : "transparent",
+                  cursor: "pointer",
+                  transition: "background 0.15s, color 0.15s",
+                }}
+                onMouseEnter={() => setHoveredOption(opt.value)}
+                onMouseLeave={() => setHoveredOption(null)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange({ target: { name, value: opt.value } });
+                  setIsOpen(false);
+                }}
+              >
+                {opt.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

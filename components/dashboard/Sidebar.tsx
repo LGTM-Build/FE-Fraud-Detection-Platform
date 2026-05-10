@@ -127,7 +127,7 @@ const navGroups: NavGroup[] = [
     group: "Sistem",
     roles: ["super_user", "super_admin"],
     items: [
-      { label: "Manajemen Tim", href: "/dashboard/teams",       icon: Icons.teams,       roles: ["super_user", "super_admin"] },
+      { label: "Manajemen Tim", href: "/dashboard/team",       icon: Icons.teams,       roles: ["super_user", "super_admin"] },
     ],
   },
 ];
@@ -148,15 +148,14 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     setUser(getUser());
   }, []);
 
+  // Default ke 'operator' sebelum user di-load agar tidak hydration mismatch
   const role = (user?.role ?? "operator") as Role;
   const rd = roleDisplay[role] ?? roleDisplay["operator"];
 
-  // Initials dari fullName
   const initials = user?.fullName
     ? user.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
     : "??";
 
-  // Filter nav by role
   const visibleGroups = navGroups
     .filter(g => g.roles.includes(role))
     .map(g => ({ ...g, items: g.items.filter(item => item.roles.includes(role)) }))
@@ -165,7 +164,10 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await api.post("/auth/logout", { refreshToken: getRefreshToken() });
+      const rt = getRefreshToken();
+      if (rt) {
+        await api.post("/auth/logout", { refreshToken: rt });
+      }
     } catch {
       // Tetap logout meski request gagal
     } finally {
@@ -235,7 +237,6 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         justifyContent: collapsed ? "center" : "flex-start",
       }}>
         {collapsed ? (
-          // Hanya tampilkan tombol expand saat dilipat agar rapi di tengah
           <button className="collapse-btn" onClick={() => setCollapsed(false)} title="Buka sidebar" style={{ width: "32px", height: "32px", borderRadius: "10px" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
@@ -264,7 +265,6 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
             {!collapsed && <div className="nav-group-label">{group.group}</div>}
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {group.items.map(item => {
-                // Perbaikan deteksi aktif khusus untuk "Beranda" / "/dashboard"
                 const isActive = item.href === "/dashboard" 
                   ? pathname === "/dashboard" 
                   : pathname === item.href || pathname.startsWith(item.href + "/");
@@ -328,14 +328,12 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
       {/* Profile + Logout */}
       <div style={{ borderTop: "1px solid var(--border)", padding: "10px 8px", flexShrink: 0 }}>
 
-        {/* User info */}
         <div style={{
           display: "flex", alignItems: "center", gap: "10px",
           padding: "8px 10px", borderRadius: "10px",
           justifyContent: collapsed ? "center" : "flex-start",
           marginBottom: "4px",
         }}>
-          {/* Avatar */}
           <div style={{
             width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
             background: "linear-gradient(135deg, var(--em), var(--em2))",
@@ -360,7 +358,6 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           )}
         </div>
 
-        {/* Logout button */}
         <button
           onClick={handleLogout}
           disabled={loggingOut}

@@ -1,3 +1,5 @@
+import React from 'react';
+
 export type FeatureStat = { val: string; lbl: string };
 
 export type Feature = {
@@ -15,23 +17,23 @@ export type Feature = {
 export const features: Feature[] = [
   {
     id: "01",
-    tag: "Auto-detect format CSV apapun",
-    title: "Smart CSV Mapper",
-    desc: "AI secara otomatis mengenali kolom dari format CSV apapun — SAP, Odoo, Accurate, Jurnal.id, atau Excel buatan sendiri. Fuzzy matching + LLM untuk kolom ambigu. Template disimpan per perusahaan.",
+    tag: "Intelijen Risiko Vendor & Pihak Ketiga",
+    title: "Analisis Risiko Vendor",
+    desc: "Profiling otomatis untuk setiap entitas vendor. Engine ML mendeteksi indikasi vendor fiktif, anomali markup harga secara historis, dan potensi konflik kepentingan antara karyawan dengan pihak ketiga.",
     stats: [
-      { val: "99%", lbl: "Akurasi mapping otomatis" },
-      { val: "< 30 dtk", lbl: "Waktu mapping per file" },
+      { val: "360°", lbl: "Visibilitas Vendor" },
+      { val: "Real-time", lbl: "Deteksi Markup" },
     ],
-    tags: ["pandas", "rapidfuzz", "LLM", "drag-and-drop"],
+    tags: ["profiling", "watchlist", "conflict-of-interest", "KYB"],
     wide: true,
+    // Video tetap dipertahankan namun konteksnya kini untuk demo analisis vendor
     video: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-        <rect x="3" y="6" width="22" height="3" rx="1" stroke="var(--em)" strokeWidth="1.2" opacity="0.7"/>
-        <rect x="3" y="12" width="16" height="3" rx="1" stroke="var(--em)" strokeWidth="1.2" opacity="0.7"/>
-        <rect x="3" y="18" width="19" height="3" rx="1" stroke="var(--em)" strokeWidth="1.2" opacity="0.7"/>
-        <path d="M22 16l4 4-4 4" stroke="var(--em)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M26 20h-6" stroke="var(--em)" strokeWidth="1.4" strokeLinecap="round"/>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="var(--em)" strokeWidth="1.8" strokeLinecap="round"/>
+        <circle cx="9" cy="7" r="4" stroke="var(--em)" strokeWidth="1.8"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="var(--em)" strokeWidth="1.8" strokeLinecap="round" opacity="0.6"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="var(--em)" strokeWidth="1.8" strokeLinecap="round" opacity="0.6"/>
       </svg>
     ),
   },
@@ -39,7 +41,7 @@ export const features: Feature[] = [
     id: "02",
     tag: "Deteksi anomali pengadaan vendor",
     title: "AI Fraud Detection — Procurement",
-    desc: "Isolation Forest mendeteksi vendor baru mencurigakan, markup harga ekstrem, relasi vendor–karyawan, dan invoice duplikat secara otomatis. Harga benchmark dari e-Katalog LKPP.",
+    desc: "Isolation Forest mendeteksi vendor baru mencurigakan, markup harga ekstrem, relasi vendor–karyawan, dan invoice duplikat secara otomatis. Harga benchmark menggunakan referensi e-Katalog LKPP.",
     stats: [
       { val: "98%", lbl: "Deteksi vendor fiktif" },
       { val: "340%", lbl: "Markup terdeteksi tertinggi" },
@@ -59,7 +61,7 @@ export const features: Feature[] = [
     id: "03",
     tag: "Deteksi klaim expense manipulatif",
     title: "AI Fraud Detection — Expense",
-    desc: "Deteksi struk palsu atau diedit, double claim dalam periode berbeda, dan nominal outlier per posisi dan departemen menggunakan model AI yang dilatih pada pola fraud nyata.",
+    desc: "Identifikasi otomatis struk palsu, double claim pada periode berbeda, dan pengeluaran di luar batas wajar (outlier) per departemen menggunakan model AI yang dilatih pada pola fraud nyata di Indonesia.",
     stats: [
       { val: "97%", lbl: "Akurasi deteksi double claim" },
       { val: "< 5 dtk", lbl: "Analisis per klaim" },

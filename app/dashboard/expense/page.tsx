@@ -13,6 +13,7 @@ import ExpenseTable from "@/components/dashboard/expense/ExpenseTable";
 import ExpenseEmptyState from "@/components/dashboard/expense/ExpenseEmptyState";
 import { DetailModal } from "@/components/dashboard/expense/DetailDrawer";
 import { AddExpenseDrawer } from "@/components/dashboard/expense/AddExpenseDrawer";
+import { ImportExpenseModal } from "@/components/dashboard/expense/ImportExpenseModal";
 
 import { usePageTitle } from "@/contexts/TopBarContext";
 import { getExpenses, updateExpenseStatus } from "@/services/expenseService";
@@ -32,6 +33,7 @@ export default function ExpensePage() {
   const [transactions, setTransactions] = useState<ExpenseTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const fetchExpenses = useCallback(async () => {
     setIsLoading(true);
@@ -121,7 +123,7 @@ export default function ExpensePage() {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               {!isMobile && "Tambah Manual"}
             </button>
-            <button style={{ display: "flex", alignItems: "center", gap: "6px", padding: isMobile ? "8px 12px" : "9px 16px", borderRadius: "10px", background: "linear-gradient(135deg, var(--em), var(--em2))", color: "#fff", fontSize: "13px", fontWeight: 500, border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 4px 16px rgba(16,185,129,0.25)" }}>
+            <button onClick={() => setIsImportModalOpen(true)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: isMobile ? "8px 12px" : "9px 16px", borderRadius: "10px", background: "linear-gradient(135deg, var(--em), var(--em2))", color: "#fff", fontSize: "13px", fontWeight: 500, border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 4px 16px rgba(16,185,129,0.25)" }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Import CSV
             </button>
@@ -145,7 +147,7 @@ export default function ExpensePage() {
               <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style> Memuat data pengeluaran...
             </div>
           ) : !hasData || activeData.length === 0 ? (
-            <ExpenseEmptyState tab={activeTab} onAddManual={() => setIsAddDrawerOpen(true)} onImportCSV={() => console.log("Import CSV diklik")} />
+            <ExpenseEmptyState tab={activeTab} onAddManual={() => setIsAddDrawerOpen(true)} onImportCSV={() => setIsImportModalOpen(true)} />
           ) : (
             <ExpenseTable data={activeData} onSelect={setSelectedTx} isMobile={isMobile} />
           )}
@@ -154,10 +156,34 @@ export default function ExpensePage() {
 
       {/* ── Modals & Drawers ─────────────────────────────────────────────────── */}
       {selectedTx && (
-        <DetailModal tx={selectedTx} onClose={() => setSelectedTx(null)} isMobile={isMobile} onApprove={handleApprove} onReject={handleReject} />
+        <DetailModal 
+          tx={selectedTx} 
+          onClose={() => setSelectedTx(null)} 
+          isMobile={isMobile} 
+          onApprove={handleApprove}
+          onReject={handleReject}
+        />
       )}
 
-      <AddExpenseDrawer isOpen={isAddDrawerOpen} onClose={() => setIsAddDrawerOpen(false)} isMobile={isMobile} onSuccess={fetchExpenses} />
+      <AddExpenseDrawer 
+        isOpen={isAddDrawerOpen} 
+        onClose={() => setIsAddDrawerOpen(false)} 
+        isMobile={isMobile} 
+        onSuccess={() => {
+          fetchExpenses();
+          setActiveTab("pending");
+        }} 
+      />
+
+      <ImportExpenseModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        isMobile={isMobile}
+        onSuccess={() => {
+          fetchExpenses();
+          setActiveTab("pending");
+        }}
+      />
     </>
   );
 }

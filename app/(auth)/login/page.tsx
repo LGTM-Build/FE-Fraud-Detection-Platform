@@ -25,7 +25,10 @@ export default function LoginPage() {
     setApiError("");
     setLoading(true);
     try {
+      // 1. Perbaiki Tipe Generic-nya agar TypeScript tahu ada bungkus 'data'
       const res = await api.post<{
+        success: boolean;
+        message: string;
         data: {
           accessToken: string;
           refreshToken: string;
@@ -37,16 +40,17 @@ export default function LoginPage() {
         { skipAuth: true }
       );
 
+      // 2. Kembalikan pemanggilan .data.accessToken karena runtime aslinya butuh ini
       setTokens({
         accessToken: res.data.accessToken,
         refreshToken: res.data.refreshToken,
       });
       saveUser(res.data.user);
+      
       router.push("/dashboard");
-    } catch (err) {
-      setApiError(
-        err instanceof Error ? err.message : "Login gagal. Periksa email dan password kamu."
-      );
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || err.message || "Login gagal. Periksa email dan password kamu.";
+      setApiError(errorMsg);
     } finally {
       setLoading(false);
     }

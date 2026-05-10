@@ -9,16 +9,16 @@ const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface RequestOptions extends RequestInit {
-  skipAuth?: boolean; // true untuk endpoint login/register
+  skipAuth?: boolean;
 }
 
-// ─── Refresh token (dipanggil otomatis saat 401) ──────────────────────────────
+// ─── Refresh token ────────────────────────────────────────────────────────────
 let isRefreshing = false;
 let refreshQueue: Array<(token: string) => void> = [];
 
 async function doRefresh(): Promise<string> {
   const refreshToken = getRefreshToken();
-  const accessToken  = getAccessToken();
+  const accessToken = getAccessToken();
 
   if (!refreshToken) {
     clearTokens();
@@ -26,7 +26,7 @@ async function doRefresh(): Promise<string> {
     throw new Error("No refresh token");
   }
 
-  const res = await fetch(`${BASE}/auth/refresh`, {
+  const res = await fetch(`${BASE}/api/auth/refresh`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -43,7 +43,7 @@ async function doRefresh(): Promise<string> {
 
   const json = await res.json();
   const newTokens = {
-    accessToken:  json.data.accessToken,
+    accessToken: json.data.accessToken,
     refreshToken: json.data.refreshToken,
   };
   setTokens(newTokens);
@@ -57,8 +57,11 @@ export async function apiFetch<T = unknown>(
 ): Promise<T> {
   const { skipAuth = false, headers = {}, ...rest } = options;
 
+  const isFormData = rest.body instanceof FormData;
+
   const buildHeaders = (token?: string | null): Record<string, string> => ({
-    "Content-Type": "application/json",
+    // Kalau FormData, jangan set Content-Type — biarkan browser set boundary otomatis
+    ...(!isFormData && { "Content-Type": "application/json" }),
     ...(headers as Record<string, string>),
     ...(!skipAuth && token ? { Authorization: `Bearer ${token}` } : {}),
   });
@@ -79,7 +82,6 @@ export async function apiFetch<T = unknown>(
         refreshQueue.forEach((cb) => cb(newToken));
         refreshQueue = [];
 
-        // Retry original request dengan token baru
         response = await fetch(`${BASE}${path}`, {
           ...rest,
           headers: buildHeaders(newToken),
@@ -90,7 +92,6 @@ export async function apiFetch<T = unknown>(
         throw err;
       }
     } else {
-      // Kalau sudah ada proses refresh berjalan, antri dulu
       const newToken = await new Promise<string>((resolve) => {
         refreshQueue.push(resolve);
       });
@@ -105,7 +106,6 @@ export async function apiFetch<T = unknown>(
   const data = await response.json();
 
   if (!response.ok) {
-    // Backend biasanya return { message: "..." } saat error
     throw new Error(data?.message ?? "Terjadi kesalahan. Coba lagi.");
   }
 

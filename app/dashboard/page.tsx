@@ -6,34 +6,44 @@ import FraudTrendChart from "@/components/dashboard/FraudTrendChart";
 import RecentTransactionsTable from "@/components/dashboard/RecentTransactionsTable";
 import QuickActions from "@/components/dashboard/QuickActions";
 import HighAlertList from "@/components/dashboard/HighAlertList";
+import { ImportDashboardModal } from "@/components/dashboard/ImportDashboardModal";
 import { usePageTitle } from "@/contexts/TopBarContext";
 
-import { getDashboardSummary, getDashboardHighAlerts, getDashboardLatest } from "@/services/dashboardService";
+import {
+  getDashboardSummary,
+  getDashboardHighAlerts,
+  getDashboardLatest,
+  getDashboardFraudTrend,
+} from "@/services/dashboardService";
 
 export default function DashboardPage() {
   usePageTitle({ title: "Beranda" });
 
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [summaryData, setSummaryData] = useState<any>(null);
   const [highAlerts, setHighAlerts] = useState<any[]>([]);
   const [latestTx, setLatestTx] = useState<any[]>([]);
+  const [fraudTrend, setFraudTrend] = useState<any>(null);
+
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [sum, alerts, latest] = await Promise.all([
+      const [sum, alerts, latest, trend] = await Promise.all([
         getDashboardSummary(),
         getDashboardHighAlerts(),
-        getDashboardLatest()
+        getDashboardLatest(),
+        getDashboardFraudTrend(),
       ]);
-      
+
       setSummaryData(sum?.data || sum);
       setHighAlerts(Array.isArray(alerts) ? alerts : alerts?.data || []);
       setLatestTx(Array.isArray(latest) ? latest : latest?.data || []);
-      console.log("Dashboard data fetched:", { summary: sum, highAlerts: alerts, latestTx: latest });
+      setFraudTrend(trend?.data || trend || null);
     } catch (error) {
       console.error("Error fetching dashboard:", error);
     } finally {
@@ -53,61 +63,71 @@ export default function DashboardPage() {
     return () => window.removeEventListener("resize", check);
   }, [fetchDashboardData]);
 
-  // Asumsi: jika ada transaksi terbaru, berarti database sudah tidak kosong
   const hasData = latestTx.length > 0 || (summaryData && summaryData.totalTransactions > 0);
-  // const hasData = false;
 
   if (isLoading) {
     return (
       <div style={{ padding: "64px", textAlign: "center", color: "var(--tm)", fontSize: "14px", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ animation: "spin 1s linear infinite", marginRight: "10px" }}><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style> Memuat data beranda...
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ animation: "spin 1s linear infinite", marginRight: "10px" }}>
+          <path d="M21 12a9 9 0 11-6.219-8.56"/>
+        </svg>
+        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+        Memuat data beranda...
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "16px" : "24px" }}>
-      {!hasData ? (
-        <>
-          <EmptyOnboardingBanner />
-          <EmptySummaryCards />
-          <EmptyChartAndAlert isMobile={isMobile} isTablet={isTablet} />
-        </>
-      ) : (
-        <>
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <QuickActions isMobile={isMobile} />
-          </div>
-          <SummaryCards data={summaryData} isMobile={isMobile} isTablet={isTablet} />
+    <>
+      <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "16px" : "24px" }}>
+        {!hasData ? (
+          <>
+            <EmptyOnboardingBanner onImportClick={() => setShowImportModal(true)} />
+            <EmptySummaryCards />
+            <EmptyChartAndAlert isMobile={isMobile} isTablet={isTablet} />
+          </>
+        ) : (
+          <>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <QuickActions isMobile={isMobile} onImportClick={() => setShowImportModal(true)} />
+            </div>
+            <SummaryCards data={summaryData} isMobile={isMobile} isTablet={isTablet} />
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr" : "1fr 320px",
-            gap: isMobile ? "16px" : "20px",
-          }}>
-            {/* Belum ada data trend */}
-            <FraudTrendChart 
-              trendWeekly={summaryData?.trendWeekly || []} 
-              trendMonthly={summaryData?.trendMonthly || []} 
-            />
-            <HighAlertList data={highAlerts} />
-          </div>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr" : "1fr 320px",
+              gap: isMobile ? "16px" : "20px",
+            }}>
+              <FraudTrendChart trendData={fraudTrend} />
+              <HighAlertList data={highAlerts} />
+            </div>
 
-          <RecentTransactionsTable data={latestTx} />
-        </>
-      )}
-    </div>
+            <RecentTransactionsTable data={latestTx} />
+          </>
+        )}
+      </div>
+
+      {/* Modal render di luar flow utama biar tidak kena stacking context */}
+      <ImportDashboardModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        isMobile={isMobile}
+        onSuccess={fetchDashboardData}
+      />
+    </>
   );
 }
 
-function EmptyOnboardingBanner() {
+// ---------------------------------------------------------------------------
+// Empty state components
+// ---------------------------------------------------------------------------
+function EmptyOnboardingBanner({ onImportClick }: { onImportClick: () => void }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <div style={{
         background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)",
         borderRadius: "16px", padding: "20px 24px", display: "flex",
-        alignItems: "center", justifyContent: "space-between", gap: "20px", flexWrap: "wrap"
+        alignItems: "center", justifyContent: "space-between", gap: "20px", flexWrap: "wrap",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <div style={{ background: "rgba(16,185,129,0.15)", color: "var(--em)", padding: "12px", borderRadius: "12px" }}>
@@ -119,10 +139,16 @@ function EmptyOnboardingBanner() {
             <strong style={{ color: "var(--tp)" }}>Upload transaksi pertamamu</strong> untuk mulai deteksi fraud otomatis dengan AI. Sistem siap, tinggal datanya.
           </p>
         </div>
-        <a href="/dashboard/import" style={{
-          padding: "10px 20px", background: "var(--surface-2)", border: "1px solid var(--border)",
-          borderRadius: "10px", color: "var(--tp)", textDecoration: "none", fontSize: "13px", fontWeight: 500, whiteSpace: "nowrap"
-        }}>Ke Import Center</a>
+        <button
+          onClick={onImportClick}
+          style={{
+            padding: "10px 20px", background: "var(--surface-2)", border: "1px solid var(--border)",
+            borderRadius: "10px", color: "var(--tp)", fontSize: "13px", fontWeight: 500,
+            whiteSpace: "nowrap", cursor: "pointer",
+          }}
+        >
+          Ke Import Center
+        </button>
       </div>
 
       <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-b)", borderRadius: "16px", padding: "24px" }}>
@@ -141,7 +167,10 @@ function EmptyOnboardingBanner() {
             </div>
             <span style={{ fontSize: "13px", color: "var(--tp)", fontWeight: 500 }}>Akun perusahaan dibuat</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", background: "var(--surface-2)", borderRadius: "10px", border: "1px solid var(--border)" }}>
+          <div
+            onClick={onImportClick}
+            style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", background: "var(--surface-2)", borderRadius: "10px", border: "1px solid var(--border)", cursor: "pointer" }}
+          >
             <div style={{ width: "22px", height: "22px", borderRadius: "50%", border: "2px solid var(--tm)", color: "var(--tm)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700 }}>2</div>
             <span style={{ fontSize: "13px", color: "var(--tp)", fontWeight: 600 }}>Upload data transaksi (CSV/Excel)</span>
           </div>
@@ -170,16 +199,21 @@ function EmptySummaryCards() {
   );
 }
 
-function EmptyChartAndAlert({ isMobile, isTablet }: { isMobile: boolean, isTablet: boolean }) {
+function EmptyChartAndAlert({ isMobile, isTablet }: { isMobile: boolean; isTablet: boolean }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr" : "1fr 320px", gap: "20px" }}>
       <div style={{ background: "var(--surface-2)", border: "1px solid var(--card-b)", borderRadius: "16px", padding: "60px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", opacity: 0.8 }}>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: "16px" }}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: "16px" }}>
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
         <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--tp)", marginBottom: "6px" }}>Belum ada tren fraud</div>
         <div style={{ fontSize: "13px", color: "var(--tm)" }}>Chart akan muncul setelah transaksi diproses AI</div>
       </div>
       <div style={{ background: "var(--surface-2)", border: "1px solid var(--card-b)", borderRadius: "16px", padding: "60px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", opacity: 0.8 }}>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: "16px" }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: "16px" }}>
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
         <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--tp)", marginBottom: "6px" }}>Tidak ada High Alert</div>
         <div style={{ fontSize: "13px", color: "var(--tm)" }}>Ini kabar baik! Atau belum ada data masuk</div>
       </div>

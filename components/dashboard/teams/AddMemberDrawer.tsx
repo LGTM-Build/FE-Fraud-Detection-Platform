@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createUser } from "@/services/userService";
+import { getEmployees } from "@/services/employeeService";
 
 interface AddMemberDrawerProps {
   isOpen: boolean;
@@ -18,13 +19,24 @@ const roleDescriptions = [
 
 export default function AddMemberDrawer({ isOpen, onClose, isMobile, onSuccess }: AddMemberDrawerProps) {
   const [loading, setLoading] = useState(false);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [employeesLoading, setEmployeesLoading] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "", email: "", password: "", role: "operator",
+    fullName: "", email: "", password: "", role: "operator", employeeId: "",
   });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setEmployeesLoading(true);
+    getEmployees()
+      .then((data) => setEmployees(Array.isArray(data) ? data : []))
+      .catch(() => setEmployees([]))
+      .finally(() => setEmployeesLoading(false));
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -36,10 +48,18 @@ export default function AddMemberDrawer({ isOpen, onClose, isMobile, onSuccess }
     e.preventDefault();
     setLoading(true);
     try {
-      await createUser(formData);
+      const payload: any = {
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      };
+      if (formData.employeeId) payload.employeeId = formData.employeeId;
+
+      await createUser(payload);
       if (onSuccess) onSuccess();
       onClose();
-      setFormData({ fullName: "", email: "", password: "", role: "operator" });
+      setFormData({ fullName: "", email: "", password: "", role: "operator", employeeId: "" });
     } catch (error) {
       console.error("Gagal menambah member:", error);
       alert("Gagal mengundang member. Pastikan email belum terdaftar.");
@@ -68,6 +88,8 @@ export default function AddMemberDrawer({ isOpen, onClose, isMobile, onSuccess }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
         @keyframes slideInBottom { from { transform: translateY(100%) } to { transform: translateY(0) } }
         .add-input:focus { border-color: var(--em) !important; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
+        .add-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px !important; }
+        .add-select:focus { border-color: var(--em) !important; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
       `}</style>
 
       <div style={{
@@ -94,11 +116,38 @@ export default function AddMemberDrawer({ isOpen, onClose, isMobile, onSuccess }
         <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px" : "24px 28px" }}>
           <form id="add-member-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div><label style={labelStyle}>Nama Lengkap</label><input required className="add-input" name="fullName" value={formData.fullName} onChange={handleChange} style={inputStyle} placeholder="Contoh: Budi Santoso" /></div>
-            
-            {/* Grid untuk Desktop, Kolom untuk Mobile */}
+
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px" }}>
               <div><label style={labelStyle}>Email</label><input required type="email" className="add-input" name="email" value={formData.email} onChange={handleChange} style={inputStyle} placeholder="budi@perusahaan.com" /></div>
               <div><label style={labelStyle}>Password Sementara</label><input required type="text" className="add-input" name="password" value={formData.password} onChange={handleChange} style={inputStyle} placeholder="Min. 8 karakter" minLength={8} /></div>
+            </div>
+
+            {/* Employee Dropdown */}
+            <div>
+              <label style={labelStyle}>
+                Tautkan ke Karyawan
+                <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "var(--ts)", marginLeft: "6px" }}>(opsional)</span>
+              </label>
+              <select
+                className="add-input add-select"
+                name="employeeId"
+                value={formData.employeeId}
+                onChange={handleChange}
+                style={{ ...inputStyle, cursor: "pointer" }}
+                disabled={employeesLoading}
+              >
+                <option value="">
+                  {employeesLoading ? "Memuat daftar karyawan..." : "— Tidak ditautkan —"}
+                </option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.fullName}{emp.department ? ` · ${emp.department}` : ""}{emp.position ? ` (${emp.position})` : ""}
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: "11px", color: "var(--ts)", marginTop: "6px", marginBottom: 0 }}>
+                Menghubungkan akun user ke data karyawan memudahkan rekonsiliasi data.
+              </p>
             </div>
 
             {/* Role Selection Cards */}
@@ -119,12 +168,8 @@ export default function AddMemberDrawer({ isOpen, onClose, isMobile, onSuccess }
                       }}
                     >
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: "13px", fontWeight: 600, color: isSelected ? r.color : "var(--tp)", marginBottom: "2px" }}>
-                          {r.label}
-                        </div>
-                        <div style={{ fontSize: "11px", color: "var(--tm)", lineHeight: 1.4 }}>
-                          {r.desc}
-                        </div>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: isSelected ? r.color : "var(--tp)", marginBottom: "2px" }}>{r.label}</div>
+                        <div style={{ fontSize: "11px", color: "var(--tm)", lineHeight: 1.4 }}>{r.desc}</div>
                       </div>
                       {isSelected && (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={r.color} strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
@@ -138,7 +183,7 @@ export default function AddMemberDrawer({ isOpen, onClose, isMobile, onSuccess }
             </div>
 
             <div style={{ padding: "10px 14px", borderRadius: "10px", background: "var(--em-subtle)", border: "1px solid var(--border)" }}>
-              <p style={{ fontSize: "11px", color: "var(--ts)", lineHeight: 1.5, margin: 0 }}>💡 Beritahu member untuk *login* menggunakan email dan password sementara di atas.</p>
+              <p style={{ fontSize: "11px", color: "var(--ts)", lineHeight: 1.5, margin: 0 }}>💡 Beritahu member untuk login menggunakan email dan password sementara di atas.</p>
             </div>
           </form>
         </div>

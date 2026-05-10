@@ -1,15 +1,26 @@
-import { api } from "@/lib/api"; // Sesuaikan path ini
+import { api } from "@/lib/api"; 
 import type { ExpenseTransaction } from "@/data/expenses";
 
 export async function getExpenses(): Promise<ExpenseTransaction[]> {
   try {
-    const res = await api.get<any>("/api/expense-monitor");
-    const responseData = res as any;
-
-    if (Array.isArray(responseData)) return responseData;
-    if (responseData && Array.isArray(responseData.data)) return responseData.data;
-    if (responseData && Array.isArray(responseData.items)) return responseData.items;
+    // 1. Kasih tipe eksplisit : any biar TypeScript ga protes
+    const res: any = await api.get("/api/expense-monitor");
     
+    // 2. Ambil payload-nya (karena kadang Axios nyimpen di .data, kadang custom fetch langsung return json)
+    const json = res.data ?? res;
+
+    // 3. Ekstrak datanya!
+    // Skenario A: Backend bungkus lagi pakai { data: [...] }
+    if (json && Array.isArray(json.data)) {
+      return json.data;
+    }
+    
+    // Skenario B: Ternyata json itu sendiri udah langsung berbentuk Array
+    if (Array.isArray(json)) {
+      return json;
+    }
+    
+    // Kalau ngga masuk skenario manapun, return array kosong
     return [];
   } catch (error) {
     console.error("Gagal mengambil data pengeluaran:", error);
@@ -19,8 +30,8 @@ export async function getExpenses(): Promise<ExpenseTransaction[]> {
 
 export async function createExpense(data: any) {
   try {
-    // Menembak ke endpoint router.post("/api/expenses")
-    return await api.post("/api/expenses", data);
+    const res: any = await api.post("/api/expenses", data);
+    return res.data ?? res;
   } catch (error) {
     console.error("Gagal menyimpan data pengeluaran:", error);
     throw new Error("Gagal menyimpan data");
@@ -29,10 +40,10 @@ export async function createExpense(data: any) {
 
 export async function updateExpenseStatus(id: string, status: string) {
   try {
-    // Menembak ke endpoint router.post("/api/expense-monitor/:id/review")
-    return await api.post(`/api/expense-monitor/${id}/review`, { status });
+    const res: any = await api.post(`/api/expense-monitor/${id}/review`, { status });
+    return res.data ?? res;
   } catch (error) {
     console.error("Gagal mengubah status transaksi:", error);
-    throw new Error("Gagal memperbarui status");
+    throw new Error("Gagal mengubah status");
   }
 }

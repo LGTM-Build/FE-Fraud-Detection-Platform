@@ -2,13 +2,14 @@
 
 interface QuickActionsProps {
   isMobile?: boolean;
+  onImportClick?: () => void;
 }
 
-export default function QuickActions({ isMobile }: QuickActionsProps) {
+export default function QuickActions({ isMobile, onImportClick }: QuickActionsProps) {
   return (
     <div style={{ display: "flex", gap: "8px", flexShrink: 0, flexWrap: "wrap" }}>
-      <a
-        href="/dashboard/import"
+      <button
+        onClick={onImportClick}
         style={{
           display: "inline-flex", alignItems: "center", gap: "6px",
           padding: isMobile ? "8px 12px" : "9px 16px",
@@ -37,7 +38,7 @@ export default function QuickActions({ isMobile }: QuickActionsProps) {
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
         {isMobile ? "Import" : "Import CSV"}
-      </a>
+      </button>
 
       <a
         href="/dashboard/report"

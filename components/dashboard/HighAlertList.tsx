@@ -45,8 +45,6 @@ function HighAlertRow({ item, isLast }: { item: any; isLast: boolean }) {
           {displayTitle}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "11px", color: "var(--em)", fontWeight: 600, fontFamily: "'DM Sans', monospace" }}>{displayCode}</span>
-          <span style={{ fontSize: "10px", color: "var(--tm)" }}>·</span>
           <span style={{ fontSize: "11px", color: "var(--ts)", fontWeight: 500 }}>{formattedAmount}</span>
         </div>
       </div>

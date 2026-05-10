@@ -29,3 +29,14 @@ export async function getDashboardLatest() {
     return [];
   }
 }
+
+export async function getDashboardFraudTrend(year?: number) {
+  try {
+    const params = year ? `?year=${year}` : "";
+    const res = await api.get(`/api/dashboard/fraud-trend${params}`);
+    return res as any;
+  } catch (error) {
+    console.error("Gagal mengambil fraud trend:", error);
+    return null;
+  }
+}

@@ -1,14 +1,19 @@
-import { FilterStatus, FILTER_LABELS, Vendor } from "@/data/vendors";
+"use client";
 
-const FILTER_ORDER: FilterStatus[] = ["all", "active", "watchlist", "blacklisted"];
+export type FilterStatus = "all" | "active" | "inactive" | "blacklisted";
+
+const FILTER_ORDER: FilterStatus[] = ["all", "active", "inactive", "blacklisted"];
+const FILTER_LABELS: Record<FilterStatus, string> = {
+  all: "Semua", active: "Aktif", inactive: "Nonaktif", blacklisted: "Blacklisted",
+};
 const ALERT_COLOR: Record<FilterStatus, string> = {
-  all: "var(--em)", active: "var(--em)", watchlist: "#d97706", blacklisted: "#dc2626",
+  all: "var(--em)", active: "var(--em)", inactive: "#d97706", blacklisted: "#dc2626",
 };
 
 interface VendorFiltersProps {
   filterStatus: FilterStatus;
   search: string;
-  vendors: Vendor[];
+  vendors: any[];
   onStatusChange: (s: FilterStatus) => void;
   onSearchChange: (q: string) => void;
   isMobile?: boolean;
@@ -18,7 +23,7 @@ export function VendorFilters({ filterStatus, search, vendors, onStatusChange, o
   const counts: Record<FilterStatus, number> = {
     all:         vendors.length,
     active:      vendors.filter(v => v.status === "active").length,
-    watchlist:   vendors.filter(v => v.status === "watchlist").length,
+    inactive:    vendors.filter(v => v.status === "inactive").length,
     blacklisted: vendors.filter(v => v.status === "blacklisted").length,
   };
 
@@ -33,7 +38,6 @@ export function VendorFilters({ filterStatus, search, vendors, onStatusChange, o
       borderRadius: "14px",
       padding: "6px",
     }}>
-      {/* Tabs — scrollable on mobile */}
       <div style={{
         display: "flex", gap: "4px", flex: 1,
         overflowX: isMobile ? "auto" : "visible",
@@ -64,7 +68,6 @@ export function VendorFilters({ filterStatus, search, vendors, onStatusChange, o
         })}
       </div>
 
-      {/* Search */}
       <div style={{
         display: "flex", alignItems: "center", gap: "8px",
         padding: "0 12px", height: "34px",
@@ -77,7 +80,7 @@ export function VendorFilters({ filterStatus, search, vendors, onStatusChange, o
           <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
         </svg>
         <input
-          placeholder={isMobile ? "Cari vendor..." : "Cari vendor atau NPWP..."}
+          placeholder="Cari nama vendor..."
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           style={{

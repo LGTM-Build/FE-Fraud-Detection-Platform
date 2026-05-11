@@ -2,8 +2,6 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ChartTooltip from "@/components/ui/ChartTooltip";
 
-// Format data dari backend: { period: "monthly", year: 2024, items: [...] }
-// Item shape: { label: "Jan", month: 1, expense: 3, procurement: 2, total: 5 }
 interface FraudTrendData {
   period: string;
   year: number;
@@ -21,15 +19,13 @@ interface ChartProps {
 }
 
 const chartLegend = [
-  { key: "expense", label: "Expense Fraud", color: "#10b981" },
-  { key: "procurement", label: "Procurement Fraud", color: "#6ee7b7" },
+  { key: "expense",      label: "Expense Fraud",      color: "var(--em)"  },
+  { key: "procurement",  label: "Procurement Fraud",  color: "var(--em2)" },
 ];
 
 export default function FraudTrendChart({ trendData }: ChartProps) {
-  // Ambil items dari response backend, fallback ke array kosong
   const rawItems = trendData?.items ?? [];
 
-  // Map ke format yang dipakai chart: ganti "label" jadi "period" untuk XAxis dataKey
   const data = rawItems.map((item) => ({
     period: item.label,
     expense: item.expense,
@@ -37,18 +33,17 @@ export default function FraudTrendChart({ trendData }: ChartProps) {
     total: item.total,
   }));
 
-  // Filter hanya bulan yang sudah lewat atau punya data (biar grafik tidak flat di kanan)
-  const currentMonth = new Date().getMonth() + 1; // 1–12
-  const currentYear = new Date().getFullYear();
-  const targetYear = trendData?.year ?? currentYear;
+  const currentMonth = new Date().getMonth() + 1;
+  const currentYear  = new Date().getFullYear();
+  const targetYear   = trendData?.year ?? currentYear;
   const isCurrentYear = targetYear === currentYear;
 
   const chartData = isCurrentYear
     ? data.filter((_, i) => (rawItems[i]?.month ?? 0) <= currentMonth)
     : data;
 
-  const isDataEmpty = chartData.length === 0;
-  const isNotEnoughData = chartData.length === 1;
+  const isDataEmpty      = chartData.length === 0;
+  const isNotEnoughData  = chartData.length === 1;
 
   return (
     <div style={{
@@ -94,9 +89,7 @@ export default function FraudTrendChart({ trendData }: ChartProps) {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: "10px" }}>
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--tp)" }}>
-              Belum ada data tren
-            </div>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--tp)" }}>Belum ada data tren</div>
             <div style={{ fontSize: "12px", color: "var(--tm)", maxWidth: "250px", marginTop: "4px" }}>
               Grafik akan muncul otomatis setelah ada aktivitas transaksi.
             </div>
@@ -128,7 +121,7 @@ export default function FraudTrendChart({ trendData }: ChartProps) {
               <XAxis dataKey="period" tick={{ fontSize: 10, fill: "var(--tm)", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} dy={8} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10, fill: "var(--tm)", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
-              <Area type="monotone" dataKey="expense" stroke="#10b981" strokeWidth={2} fill="url(#gradExpense)" dot={false} activeDot={{ r: 5, fill: "#10b981", stroke: "var(--bg)", strokeWidth: 2 }} />
+              <Area type="monotone" dataKey="expense"     stroke="#10b981" strokeWidth={2} fill="url(#gradExpense)"     dot={false} activeDot={{ r: 5, fill: "#10b981", stroke: "var(--bg)", strokeWidth: 2 }} />
               <Area type="monotone" dataKey="procurement" stroke="#6ee7b7" strokeWidth={2} fill="url(#gradProcurement)" dot={false} activeDot={{ r: 5, fill: "#6ee7b7", stroke: "var(--bg)", strokeWidth: 2 }} />
             </AreaChart>
           </ResponsiveContainer>

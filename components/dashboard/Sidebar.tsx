@@ -9,8 +9,8 @@ type Role = "super_user" | "super_admin" | "auditor" | "operator" | "department_
 
 // Role display metadata
 const roleDisplay: Record<Role, { label: string; color: string; bg: string; border: string }> = {
-  super_user:     { label: "Super User",     color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
-  super_admin:     { label: "Super Admin",     color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
+  super_user:      { label: "Super User",    color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
+  super_admin:     { label: "Super Admin",   color: "#dc2626", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
   auditor:        { label: "Auditor",        color: "var(--em)", bg: "var(--em-subtle)",      border: "rgba(16,185,129,0.20)" },
   operator:       { label: "Operator",       color: "#d97706", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.20)" },
   department_head: { label: "Kepala Dept", color: "#7c3aed", bg: "rgba(124,58,237,0.08)", border: "rgba(124,58,237,0.20)" },
@@ -70,18 +70,6 @@ const Icons = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   ),
-  report: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-    </svg>
-  ),
-  import: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-      <polyline points="17 8 12 3 7 8"/>
-      <line x1="12" y1="3" x2="12" y2="15"/>
-    </svg>
-  ),
   settings: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
       <circle cx="12" cy="12" r="3"/>
@@ -108,19 +96,17 @@ const navGroups: NavGroup[] = [
     group: "Monitor",
     roles: ["super_user", "super_admin", "auditor", "operator", "department_head"],
     items: [
-      { label: "Beranda",          href: "/dashboard",             icon: Icons.dashboard,   roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
+      { label: "Beranda",      href: "/dashboard",             icon: Icons.dashboard,   roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
       { label: "Pengeluaran",    href: "/dashboard/expense",     icon: Icons.expense,     roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
       { label: "Pengadaan",        href: "/dashboard/procurement", icon: Icons.procurement, roles: ["super_user", "super_admin", "auditor", "operator", "department_head"] },
-      { label: "Info Vendor",href: "/dashboard/vendor",      icon: Icons.vendor,      roles: ["super_user", "super_admin", "auditor", "department_head"] },
     ],
   },
   {
-    group: "Operasional",
+    group: "Manajemen Data",
     roles: ["super_user", "super_admin", "auditor", "operator", "department_head"],
     items: [
-      { label: "Karyawan",         href: "/dashboard/employee", icon: Icons.employee, roles: ["super_user", "super_admin", "operator", "department_head"] },
-      { label: "Laporan", href: "/dashboard/report",  icon: Icons.report,  roles: ["super_user", "super_admin", "auditor", "department_head"] },
-      { label: "Pusat Impor",    href: "/dashboard/import",  icon: Icons.import,  roles: ["super_user", "super_admin", "operator", "department_head"] },
+      { label: "Data Vendor",      href: "/dashboard/vendor",      icon: Icons.vendor,      roles: ["super_user", "super_admin", "auditor", "department_head"] },
+      { label: "Data Karyawan",    href: "/dashboard/employee",    icon: Icons.employee,    roles: ["super_user", "super_admin", "operator", "department_head"] },
     ],
   },
   {

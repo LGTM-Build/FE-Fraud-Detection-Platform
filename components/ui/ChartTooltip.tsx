@@ -24,7 +24,7 @@ export default function ChartTooltip({ active, payload, label }: {
         <div key={p.name} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
           <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: p.color, flexShrink: 0 }} />
           <span style={{ color: "var(--ts)" }}>{p.name === "expense" ? "Expense" : "Procurement"}</span>
-          <span style={{ color: "var(--tp)", fontWeight: 600, marginLeft: "auto", paddingLeft: "12px" }}>
+          <span style={{ color: "var(--em)", fontWeight: 600, marginLeft: "auto", paddingLeft: "12px" }}>
             {p.value} kasus
           </span>
         </div>

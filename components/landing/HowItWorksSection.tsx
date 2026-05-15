@@ -113,14 +113,14 @@ export default function HowItWorksSection() {
             fontWeight: 800, lineHeight: 1.05, letterSpacing: "-2px",
             color: "var(--tp)",
           }}>
-            Dari CSV ke<br /><span className="grad-text">Laporan Audit</span><br />dalam 5 langkah.
+            Dari CSV ke<br /><span className="grad-text">Hasil Audit</span><br />dalam 4 langkah.
           </h2>
         </div>
         <div>
           <p style={{ fontSize: "clamp(14px, 1.6vw, 17px)", fontWeight: 300, color: "var(--ts)", lineHeight: 1.65, marginBottom: "28px" }}>
             Tidak perlu setup panjang, tidak perlu training tim. Fradara dirancang agar auditor non-teknis sekalipun bisa langsung menggunakannya di hari pertama.
           </p>
-          <a href="#demo" className="btn-primary">
+          <a href="/login" className="btn-primary">
             Coba Sekarang
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -203,7 +203,7 @@ export default function HowItWorksSection() {
                 boxShadow: activeStep === idx ? "0 0 8px var(--em-glow)" : "none",
               }} />
               <span style={{ fontSize: "11px", color: "var(--tm)", fontWeight: 500 }}>
-                Langkah {step.num} dari 05
+                Langkah {step.num} dari 04
               </span>
             </div>
           </div>
@@ -236,8 +236,8 @@ export default function HowItWorksSection() {
             <span className="grad-text">Gratis 14 hari.</span>
           </h3>
           <div className="hiw-cta-btns" style={{ display: "flex", gap: "14px", flexWrap: "wrap", justifyContent: "center" }}>
-            <a href="#demo" className="btn-primary" style={{ fontSize: "clamp(13px, 1.5vw, 15px)", padding: "16px 34px" }}>Mulai Trial Gratis</a>
-            <a href="/features" className="btn-ghost" style={{ fontSize: "clamp(13px, 1.5vw, 15px)", padding: "16px 34px" }}>Lihat Semua Fitur ↗</a>
+            <a href="/login" className="btn-primary" style={{ fontSize: "clamp(13px, 1.5vw, 15px)", padding: "16px 34px" }}>Mulai Trial Gratis</a>
+            {/* <a href="/features" className="btn-ghost" style={{ fontSize: "clamp(13px, 1.5vw, 15px)", padding: "16px 34px" }}>Lihat Semua Fitur ↗</a> */}
           </div>
         </div>
       </div>

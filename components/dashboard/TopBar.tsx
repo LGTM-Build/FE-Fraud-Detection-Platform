@@ -55,11 +55,7 @@ export default function TopBar({ onMenuClick, showMenuButton }: TopBarProps) {
             background: var(--surface-2);
           }
           @media (max-width: 767px) {
-            .topbar-search { display: none !important; }
             .topbar-subtitle { display: none !important; }
-          }
-          @media (max-width: 1023px) {
-            .topbar-search input { width: 120px !important; }
           }
         `}</style>
 

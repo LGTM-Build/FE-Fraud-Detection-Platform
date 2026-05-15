@@ -1,10 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import {
-  MOCK_DATA,
-  HAS_DATA,
   REVIEW_STATUSES,
+  PENDING_STATUSES,
   HISTORY_STATUSES,
   type ViewTab,
   type ReviewFilter,
@@ -12,25 +11,98 @@ import {
   type ProcurementTransaction,
 } from "@/data/procurement";
 
-import ProcurementSummaryCards from "@/components/dashboard/procurement/ProcurementSummaryCard";
-import ProcurementViewTabs     from "@/components/dashboard/procurement/ProcurementViewTabs";
-import ProcurementFilterBar    from "@/components/dashboard/procurement/ProcurementFilterBar";
-import ProcurementTable        from "@/components/dashboard/procurement/ProcurementTable";
-import ProcurementEmptyState   from "@/components/dashboard/procurement/ProcurementEmptyState";
-import { DetailModal }         from "@/components/dashboard/procurement/DetailDrawer";
+import ProcurementSummaryCards   from "@/components/dashboard/procurement/ProcurementSummaryCard";
+import ProcurementViewTabs       from "@/components/dashboard/procurement/ProcurementViewTabs";
+import ProcurementFilterBar      from "@/components/dashboard/procurement/ProcurementFilterBar";
+import ProcurementTable          from "@/components/dashboard/procurement/ProcurementTable";
+import ProcurementEmptyState     from "@/components/dashboard/procurement/ProcurementEmptyState";
+import { DetailModal }           from "@/components/dashboard/procurement/DetailDrawer";
+import { AddProcurementDrawer }  from "@/components/dashboard/procurement/AddProcurementDrawer";
+import { ImportProcurementModal } from "@/components/dashboard/procurement/ImportProcurementModal";
 
 import { usePageTitle } from "@/contexts/TopBarContext";
+import { getTransactions, updateTransactionStatus } from "@/services/procurementService";
 
 export default function ProcurementPage() {
-  usePageTitle({ title: "Procurement" });
+  usePageTitle({ title: "Pengadaan" });
 
-  const [isMobile, setIsMobile]           = useState(false);
-  const [isTablet, setIsTablet]           = useState(false);
-  const [activeTab, setActiveTab]         = useState<ViewTab>("review");
-  const [reviewFilter, setReviewFilter]   = useState<ReviewFilter>("all");
-  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("all");
-  const [filterBU, setFilterBU]           = useState("all");
-  const [selectedTx, setSelectedTx]       = useState<ProcurementTransaction | null>(null);
+  const [isMobile, setIsMobile]               = useState(false);
+  const [isTablet, setIsTablet]               = useState(false);
+  const [activeTab, setActiveTab]             = useState<ViewTab>("review");
+  const [reviewFilter, setReviewFilter]       = useState<ReviewFilter>("all");
+  const [historyFilter, setHistoryFilter]     = useState<HistoryFilter>("all");
+  const [filterBU, setFilterBU]               = useState("all");
+  const [selectedTx, setSelectedTx]           = useState<ProcurementTransaction | null>(null);
+  const [transactions, setTransactions]       = useState<ProcurementTransaction[]>([]);
+  const [isLoading, setIsLoading]             = useState(true);
+  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen]       = useState(false);
+
+  const fetchTransactions = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getTransactions();
+      let validArray: any[] = [];
+      if (Array.isArray(data)) validArray = data;
+      else if (data && Array.isArray((data as any).data)) validArray = (data as any).data;
+      else if (data && Array.isArray((data as any).items)) validArray = (data as any).items;
+
+      // ─── MAGIC FIX: KITA BERSIHKAN DATANYA DI SINI ───
+      const parsedArray = validArray.map((item) => {
+        // 1. Fix Amount: Ambil dari 'amount' atau 'amountTotal' mana yang ada
+        const cleanAmount = Number(item.amount) || Number(item.amountTotal) || 0;
+
+        // 2. Fix Tanggal: JS gak ngerti "Mei", jadi kita translate dulu ke Inggris
+        let cleanDate = item.purchaseDate || item.date || item.createdAt;
+        if (typeof cleanDate === "string") {
+          cleanDate = cleanDate
+            .replace("Mei", "May")
+            .replace("Agu", "Aug")
+            .replace("Okt", "Oct")
+            .replace("Des", "Dec");
+        }
+        
+        // Tes apakah format tanggalnya udah benar
+        const parsedDate = new Date(cleanDate);
+        const finalDate = isNaN(parsedDate.getTime()) ? item.createdAt : parsedDate.toISOString();
+
+        return {
+          ...item,
+          // Kita masukin dua-duanya biar Summary Card & Table aman baca datanya
+          amount: cleanAmount,
+          amountTotal: cleanAmount,
+          purchaseDate: finalDate,
+          date: finalDate,
+        };
+      });
+
+      setTransactions(parsedArray as unknown as ProcurementTransaction[]);
+    } catch (error) {
+      console.error("Gagal mengambil data transaksi:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      await updateTransactionStatus(id, "approved");
+      await fetchTransactions();
+      setSelectedTx(null);
+    } catch {
+      alert("Gagal memproses persetujuan.");
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await updateTransactionStatus(id, "rejected");
+      await fetchTransactions();
+      setSelectedTx(null);
+    } catch {
+      alert("Gagal memproses penolakan.");
+    }
+  };
 
   useEffect(() => {
     const check = () => {
@@ -39,106 +111,79 @@ export default function ProcurementPage() {
     };
     check();
     window.addEventListener("resize", check);
+    fetchTransactions();
     return () => window.removeEventListener("resize", check);
-  }, []);
+  }, [fetchTransactions]);
 
-  // ── Data split ────────────────────────────────────────────────────────────────
-  const reviewData  = MOCK_DATA.filter(t => REVIEW_STATUSES.includes(t.status));
-  const historyData = MOCK_DATA.filter(t => HISTORY_STATUSES.includes(t.status));
-  const businessUnits = ["all", ...Array.from(new Set(MOCK_DATA.map(t => t.businessUnit)))];
+  const reviewData  = transactions.filter(t => REVIEW_STATUSES.includes(t.status as any));
+  const pendingData = transactions.filter(t => PENDING_STATUSES.includes(t.status as any));
+  const historyData = transactions.filter(t => HISTORY_STATUSES.includes(t.status as any));
 
-  // ── Filtered ──────────────────────────────────────────────────────────────────
+  const businessUnits = [
+    "all",
+    ...Array.from(new Set(
+      transactions.map(t => (t as any).businessUnit || (t as any).department).filter(Boolean) as string[]
+    )),
+  ];
+
   const applyBU = (data: ProcurementTransaction[]) =>
-    filterBU === "all" ? data : data.filter(t => t.businessUnit === filterBU);
+    filterBU === "all" ? data : data.filter(t => ((t as any).businessUnit || (t as any).department) === filterBU);
 
-  const filteredReview  = applyBU(
-    reviewFilter === "all" ? reviewData : reviewData.filter(t => t.status === reviewFilter)
-  );
-  const filteredHistory = applyBU(
-    historyFilter === "all" ? historyData : historyData.filter(t => t.status === historyFilter)
-  );
-  const activeData = activeTab === "review" ? filteredReview : filteredHistory;
+  const filteredReview  = applyBU(reviewFilter === "all" ? reviewData : reviewData.filter(t => t.status === reviewFilter));
+  const filteredPending = applyBU(pendingData);
+  const filteredHistory = applyBU(historyFilter === "all" ? historyData : historyData.filter(t => t.status === historyFilter));
+
+  const activeData = activeTab === "review" ? filteredReview : activeTab === "history" ? filteredHistory : filteredPending;
+  const hasData = transactions.length > 0;
 
   return (
     <>
       <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "16px" : "24px" }}>
 
-        {/* ── Page Header: desc + action buttons ─────────────────────────────── */}
-        <div style={{
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
-          alignItems: isMobile ? "flex-start" : "flex-end",
-          justifyContent: "space-between",
-          gap: "16px",
-        }}>
-          <p style={{
-            fontSize: "13px",
-            color: "var(--tm)",
-            fontWeight: 400,
-            lineHeight: 1.65,
-            maxWidth: "480px",
-            margin: 0,
-          }}>
+        {/* Header */}
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", gap: "16px" }}>
+          <p style={{ fontSize: "13px", color: "var(--tm)", fontWeight: 400, lineHeight: 1.65, maxWidth: "480px", margin: 0 }}>
             Monitor dan review transaksi pengadaan vendor secara real-time.{" "}
             Tindak lanjuti transaksi yang membutuhkan perhatian sebelum jatuh tempo.
           </p>
 
           <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
-            <button style={{
-              display: "flex", alignItems: "center", gap: "6px",
-              padding: isMobile ? "8px 12px" : "9px 16px",
-              borderRadius: "10px",
-              background: "var(--surface-2)",
-              color: "var(--ts)",
-              fontSize: "13px",
-              border: "1px solid var(--border)",
-              cursor: "pointer",
-              fontFamily: "'DM Sans', sans-serif",
-            }}>
+            <button
+              onClick={() => setIsAddDrawerOpen(true)}
+              style={{ display: "flex", alignItems: "center", gap: "6px", padding: isMobile ? "8px 12px" : "9px 16px", borderRadius: "10px", background: "var(--surface-2)", color: "var(--ts)", fontSize: "13px", border: "1px solid var(--border)", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+            >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               {!isMobile && "Tambah Manual"}
             </button>
-            <button style={{
-              display: "flex", alignItems: "center", gap: "6px",
-              padding: isMobile ? "8px 12px" : "9px 16px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, var(--em), var(--em2))",
-              color: "#fff",
-              fontSize: "13px",
-              fontWeight: 500,
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "'DM Sans', sans-serif",
-              boxShadow: "0 4px 16px rgba(16,185,129,0.25)",
-            }}>
+            <button
+              onClick={() => setIsImportOpen(true)}
+              style={{ display: "flex", alignItems: "center", gap: "6px", padding: isMobile ? "8px 12px" : "9px 16px", borderRadius: "10px", background: "linear-gradient(135deg, var(--em), var(--em2))", color: "#fff", fontSize: "13px", fontWeight: 500, border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 4px 16px rgba(16,185,129,0.25)" }}
+            >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
               Import CSV
             </button>
           </div>
         </div>
 
-        {/* ── Summary Cards ───────────────────────────────────────────────────── */}
-        {HAS_DATA && (
-          <ProcurementSummaryCards data={MOCK_DATA} isMobile={isMobile} isTablet={isTablet} />
+        {hasData && !isLoading && (
+          <ProcurementSummaryCards data={transactions} isMobile={isMobile} isTablet={isTablet} />
         )}
 
-        {/* ── View Tabs ───────────────────────────────────────────────────────── */}
         <ProcurementViewTabs
           activeTab={activeTab}
           reviewCount={reviewData.length}
+          pendingCount={pendingData.length}
           historyCount={historyData.length}
           onTabChange={setActiveTab}
         />
 
-        {/* ── Filter Bar ──────────────────────────────────────────────────────── */}
-        {HAS_DATA && (
+        {hasData && !isLoading && activeTab !== "pending" && (
           <ProcurementFilterBar
             activeTab={activeTab}
             reviewFilter={reviewFilter}
@@ -154,49 +199,51 @@ export default function ProcurementPage() {
           />
         )}
 
-        {/* ── Table / Empty State ─────────────────────────────────────────────── */}
-        <div style={{
-          background: "var(--card-bg)",
-          border: "1px solid var(--card-b)",
-          borderRadius: "16px",
-          overflow: "hidden",
-        }}>
-          {!HAS_DATA || activeData.length === 0 ? (
-            <ProcurementEmptyState 
-              tab={activeTab} 
-              onAddManual={() => console.log("Tambah Manual diklik")} 
-              onImportCSV={() => console.log("Import CSV diklik")} 
+        <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-b)", borderRadius: "16px", overflow: "hidden", minHeight: "300px", display: "flex", flexDirection: "column" }}>
+          {isLoading ? (
+            <div style={{ padding: "48px", textAlign: "center", color: "var(--tm)", fontSize: "14px", display: "flex", justifyContent: "center", alignItems: "center", height: "100%", flex: 1 }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ animation: "spin 1s linear infinite", marginRight: "10px" }}>
+                <path d="M21 12a9 9 0 11-6.219-8.56" />
+              </svg>
+              <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+              Memuat data pengadaan...
+            </div>
+          ) : !hasData || activeData.length === 0 ? (
+            <ProcurementEmptyState
+              tab={activeTab}
+              onAddManual={() => setIsAddDrawerOpen(true)}
+              onImportCSV={() => setIsImportOpen(true)}
             />
           ) : (
-            <ProcurementTable
-              data={activeData}
-              onSelect={setSelectedTx}
-              isMobile={isMobile}
-            />
+            <ProcurementTable data={activeData} onSelect={setSelectedTx} isMobile={isMobile} />
           )}
         </div>
       </div>
 
-      {/* ── Detail Modal ─────────────────────────────────────────────────────── */}
+      {/* Modals */}
       {selectedTx && (
         <DetailModal
           tx={selectedTx}
           onClose={() => setSelectedTx(null)}
           isMobile={isMobile}
-          onApprove={async (id) => {
-            console.log("approve", id);
-            setSelectedTx(null);
-          }}
-          onReject={async (id) => {
-            console.log("reject", id);
-            setSelectedTx(null);
-          }}
-          onEscalate={async (id) => {
-            console.log("escalate", id);
-            setSelectedTx(null);
-          }}
+          onApprove={handleApprove}
+          onReject={handleReject}
         />
       )}
+
+      <AddProcurementDrawer
+        isOpen={isAddDrawerOpen}
+        onClose={() => setIsAddDrawerOpen(false)}
+        isMobile={isMobile}
+        onSuccess={fetchTransactions}
+      />
+
+      <ImportProcurementModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        isMobile={isMobile}
+        onSuccess={fetchTransactions}
+      />
     </>
   );
 }

@@ -16,7 +16,7 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-  title: "Fradara — Radar Fraud Keuangan Berbasis AI",
+  title: "Fradara",
   description: "Platform SaaS AI untuk deteksi fraud expense dan procurement perusahaan Indonesia.",
 };
 

@@ -1,102 +1,141 @@
 // ─── Types ─────────────────────────────────────────────────────────────────────
+// TODO integrasi: sesuaikan dengan response GET /api/procurement-transactions
+
+// Status pakai underscore ikut BE
 export type ProcurementStatus =
-  | "pending"
-  | "high-alert"
-  | "approved"
-  | "rejected"
-  | "auto-approved";
+  | "pending"       // Data masih diproses ML
+  | "alert"         // Fraud score 30–70, perlu ditinjau
+  | "high_alert"    // Fraud score > 70, risiko tinggi
+  | "auto_approved" // Disetujui otomatis oleh AI
+  | "approved"      // Disetujui auditor
+  | "rejected";     // Ditolak auditor
 
-export type ViewTab = "review" | "history";
-export type ReviewFilter = "all" | "high-alert" | "pending";
-export type HistoryFilter = "all" | "approved" | "rejected" | "auto-approved";
+// Tab view
+export type ViewTab = "review" | "pending" | "history";
 
+// Filter per tab
+export type ReviewFilter  = "all" | "high_alert" | "alert";
+export type PendingFilter = "all";
+export type HistoryFilter = "all" | "approved" | "auto_approved" | "rejected";
+
+// Procurement method — hardcode enum ikut BE
+export type ProcurementMethod =
+  | "pengadaan_langsung"
+  | "tender_terbuka"
+  | "penunjukan_langsung"
+  | "seleksi_langsung"
+  | "e_purchasing";
+
+// ─── Main transaction type ─────────────────────────────────────────────────────
 export interface ProcurementTransaction {
   id: string;
-  docNumber: string;
-  date: string;
+  purchaseId: string | null;
+  purchaseDate: string;           // ISO string dari BE
   vendorName: string;
-  vendorTaxId: string;
   itemDescription: string;
-  businessUnit: string;
-  requester: string;
-  approver: string;
-  amount: number;
-  fraudScore: number;
-  flags: string[];
+  department: string | null;
+  amountTotal: number;
+  fraudScore: number | null;      // null kalau masih pending ML
+  flags: string[];                // array of string
   status: ProcurementStatus;
-  procurementMethod: string;
-  aiExplanation: string;
+  procurementMethod: ProcurementMethod;
+  aiExplanation: string | null;   // null kalau masih pending ML
+  employeeId: string | null;
+  employeeName: string | null;    // di-join di BE
+  requesterId: string;
+  requesterName: string;          // di-join di BE
+  reviewerName: string | null;    // dari updatedBy saat status berubah
+  createdAt: string;
+  updatedAt: string;
 }
 
-// ─── Constants & Logic Grouping ────────────────────────────────────────────────
-
-export const REVIEW_STATUSES: ProcurementStatus[] = ["pending", "high-alert"];
-export const HISTORY_STATUSES: ProcurementStatus[] = ["approved", "rejected", "auto-approved"];
-
-export const TABLE_COL_HEADERS = [
-  "ID / No. PO", "Tanggal", "Vendor", "Item",
-  "Unit Bisnis", "Metode", "Total", "Score", "Flag", "Status", "",
-];
-
-export const VIEW_TABS_CONFIG = [
-  { key: "review" as ViewTab, label: "Perlu Review" },
-  { key: "history" as ViewTab, label: "History" },
-];
-
-export const REVIEW_FILTERS_CONFIG = [
-  { key: "all" as ReviewFilter, label: "Semua" },
-  { key: "high-alert" as ReviewFilter, label: "High Alert" },
-  { key: "pending" as ReviewFilter, label: "Pending" },
-];
-
-export const HISTORY_FILTERS_CONFIG = [
-  { key: "all" as HistoryFilter, label: "Semua" },
-  { key: "approved" as HistoryFilter, label: "Approved" },
-  { key: "auto-approved" as HistoryFilter, label: "Auto Approved" },
-  { key: "rejected" as HistoryFilter, label: "Rejected" },
-];
-
-// ─── Status Visual Config ──────────────────────────────────────────────────────
-export const statusConfig: Record<
-  ProcurementStatus,
-  { label: string; bg: string; color: string; border: string; dot: string }
-> = {
+// ─── Status config (UI) ────────────────────────────────────────────────────────
+export const statusConfig: Record<ProcurementStatus, {
+  label: string; bg: string; color: string; border: string; dot: string;
+}> = {
   pending: {
-    label: "Pending Review",
+    label: "Menunggu AI",
+    bg: "rgba(99,102,241,0.08)",
+    color: "#6366f1",
+    border: "rgba(99,102,241,0.20)",
+    dot: "#6366f1",
+  },
+  alert: {
+    label: "Perlu Ditinjau",
     bg: "rgba(245,158,11,0.10)",
     color: "#d97706",
     border: "rgba(245,158,11,0.20)",
     dot: "#f59e0b",
   },
-  "high-alert": {
-    label: "High Alert",
+  high_alert: {
+    label: "Risiko Tinggi",
     bg: "rgba(239,68,68,0.10)",
     color: "#dc2626",
     border: "rgba(239,68,68,0.20)",
     dot: "#ef4444",
   },
   approved: {
-    label: "Approved",
+    label: "Disetujui",
     bg: "rgba(16,185,129,0.10)",
-    color: "#10b981",
+    color: "var(--em)",
     border: "rgba(16,185,129,0.20)",
     dot: "#10b981",
   },
+  auto_approved: {
+    label: "Disetujui Otomatis",
+    bg: "rgba(16,185,129,0.06)",
+    color: "var(--em)",
+    border: "rgba(16,185,129,0.15)",
+    dot: "#10b981",
+  },
   rejected: {
-    label: "Rejected",
-    bg: "rgba(100,100,100,0.10)",
+    label: "Ditolak",
+    bg: "rgba(100,100,100,0.08)",
     color: "var(--tm)",
     border: "var(--border)",
     dot: "var(--tm)",
   },
-  "auto-approved": {
-    label: "Auto Approved",
-    bg: "rgba(16,185,129,0.08)",
-    color: "#10b981",
-    border: "rgba(16,185,129,0.15)",
-    dot: "#10b981",
-  },
 };
+
+// ─── Procurement method labels ─────────────────────────────────────────────────
+export const procurementMethodLabels: Record<ProcurementMethod, string> = {
+  pengadaan_langsung:  "Pengadaan Langsung",
+  tender_terbuka:      "Tender Terbuka",
+  penunjukan_langsung: "Penunjukan Langsung",
+  seleksi_langsung:    "Seleksi Langsung",
+  e_purchasing:        "E-Purchasing",
+};
+
+// Untuk dropdown di form tambah manual
+export const PROCUREMENT_METHOD_OPTIONS = Object.entries(procurementMethodLabels).map(
+  ([value, label]) => ({ value: value as ProcurementMethod, label })
+);
+
+// ─── Status grouping ───────────────────────────────────────────────────────────
+export const REVIEW_STATUSES:  ProcurementStatus[] = ["high_alert", "alert"];
+export const PENDING_STATUSES: ProcurementStatus[] = ["pending"];
+export const HISTORY_STATUSES: ProcurementStatus[] = ["approved", "auto_approved", "rejected"];
+
+// ─── Tab config ────────────────────────────────────────────────────────────────
+export const VIEW_TABS_CONFIG: { key: ViewTab; label: string }[] = [
+  { key: "review",  label: "Perlu Ditinjau" },
+  { key: "pending", label: "Menunggu AI" },
+  { key: "history", label: "Riwayat" },
+];
+
+// ─── Filter configs ────────────────────────────────────────────────────────────
+export const REVIEW_FILTERS_CONFIG: { key: ReviewFilter; label: string }[] = [
+  { key: "all",        label: "Semua" },
+  { key: "high_alert", label: "Risiko Tinggi" },
+  { key: "alert",      label: "Perlu Ditinjau" },
+];
+
+export const HISTORY_FILTERS_CONFIG: { key: HistoryFilter; label: string }[] = [
+  { key: "all",          label: "Semua" },
+  { key: "approved",     label: "Disetujui" },
+  { key: "auto_approved",label: "Disetujui Otomatis" },
+  { key: "rejected",     label: "Ditolak" },
+];
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 export const fmt = (n: number) =>
@@ -106,404 +145,241 @@ export const fmt = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-export const getFraudRiskConfig = (score: number) => {
-  if (score >= 70) return {
-    label: "High Risk — perlu tindakan segera",
-    color: "#ef4444",
-    bg: "rgba(239,68,68,0.07)",
-    border: "rgba(239,68,68,0.18)"
-  };
-  if (score >= 30) return {
-    label: "Medium Risk — perlu review",
-    color: "#f59e0b",
-    bg: "rgba(245,158,11,0.07)",
-    border: "rgba(245,158,11,0.18)"
-  };
-  return {
-    label: "Low Risk — aman",
-    color: "#10b981",
-    bg: "rgba(16,185,129,0.07)",
-    border: "rgba(16,185,129,0.18)"
-  };
-};
-
 export const fmtCompact = (n: number) => {
   if (n >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toFixed(1)}M`;
   if (n >= 1_000_000)     return `Rp ${(n / 1_000_000).toFixed(1)}jt`;
   if (n >= 1_000)         return `Rp ${(n / 1_000).toFixed(0)}rb`;
-  return `Rp ${n}`;
+  return fmt(n);
 };
 
+export const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("id-ID", {
+    day: "numeric", month: "short", year: "numeric",
+  });
+
 // ─── Mock data ─────────────────────────────────────────────────────────────────
-// TODO integrasi: ganti dengan state dari fetch API
-// GET /api/procurement-transactions?status=pending,high-alert  → reviewData
-// GET /api/procurement-transactions?status=approved,rejected,auto-approved → historyData
+// TODO integrasi: hapus ini, ganti dengan fetch ke:
+// GET /api/procurement-transactions?status=high_alert,alert   → tab Perlu Ditinjau
+// GET /api/procurement-transactions?status=pending            → tab Menunggu AI
+// GET /api/procurement-transactions?status=approved,auto_approved,rejected → tab Riwayat
 export const MOCK_DATA: ProcurementTransaction[] = [
   {
-    id: "PRC-0010",
-    docNumber: "PO-2026-0892",
-    date: "10 Apr 2026",
+    id: "uuid-001",
+    purchaseId: "PRC-0036",
+    purchaseDate: "2026-04-10T08:00:00.000Z",
     vendorName: "UD Stationery Plus",
-    vendorTaxId: "01.234.567.8-901.000",
     itemDescription: "Alat Tulis Kantor — bulk order Q2",
-    businessUnit: "General Affairs",
-    requester: "Hendra Wijaya",
-    approver: "Hendra Wijaya",
-    amount: 3750000,
+    department: "General Affairs",
+    amountTotal: 3750000,
     fraudScore: 91,
-    flags: ["Duplicate Invoice", "Self Approval"],
-    status: "high-alert",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation:
-      "Invoice identik dengan PRC-0021. Requester dan approver orang yang sama — pelanggaran Segregation of Duties.",
+    flags: ["Duplikasi Invoice", "Persetujuan Mandiri"],
+    status: "high_alert",
+    procurementMethod: "penunjukan_langsung",
+    aiExplanation: "Invoice identik dengan PRC-0021. Pemohon dan penyetuju adalah orang yang sama — pelanggaran pemisahan tugas.",
+    employeeId: "emp-uuid-001",
+    employeeName: "Hendra Wijaya",
+    requesterId: "user-uuid-001",
+    requesterName: "Dewi Operator",
+    reviewerName: null,
+    createdAt: "2026-04-10T08:00:00.000Z",
+    updatedAt: "2026-04-10T08:00:00.000Z",
   },
   {
-    id: "PRC-0011",
-    docNumber: "PO-2026-0901",
-    date: "12 Apr 2026",
+    id: "uuid-002",
+    purchaseId: "PRC-0040",
+    purchaseDate: "2026-04-12T09:00:00.000Z",
     vendorName: "CV Maju Bersama",
-    vendorTaxId: "07.891.234.5-678.000",
     itemDescription: "Pengadaan ATK & perlengkapan kantor",
-    businessUnit: "Procurement",
-    requester: "Dewi Rahayu",
-    approver: "Suharto Wibowo",
-    amount: 18500000,
+    department: "Procurement",
+    amountTotal: 18500000,
     fraudScore: 74,
-    flags: ["Price Markup", "Vendor Baru"],
-    status: "high-alert",
-    procurementMethod: "Penunjukan Langsung",
+    flags: ["Markup Harga", "Vendor Baru"],
+    status: "high_alert",
+    procurementMethod: "penunjukan_langsung",
     aiExplanation: "Vendor baru terdaftar 14 hari sebelum PO. Harga 280% di atas e-Katalog LKPP.",
+    employeeId: "emp-uuid-002",
+    employeeName: "Dewi Rahayu",
+    requesterId: "user-uuid-001",
+    requesterName: "Dewi Operator",
+    reviewerName: null,
+    createdAt: "2026-04-12T09:00:00.000Z",
+    updatedAt: "2026-04-12T09:00:00.000Z",
   },
   {
-    id: "PRC-0012",
-    docNumber: "PO-2026-0887",
-    date: "11 Apr 2026",
+    id: "uuid-003",
+    purchaseId: "PRC-0038",
+    purchaseDate: "2026-04-11T10:00:00.000Z",
     vendorName: "PT Solusi Digital Indonesia",
-    vendorTaxId: "03.456.789.0-123.000",
     itemDescription: "Jasa konsultasi pengembangan sistem IT",
-    businessUnit: "IT",
-    requester: "Rina Kusuma",
-    approver: "Rina Kusuma",
-    amount: 75000000,
-    fraudScore: 61,
-    flags: ["Self Approval", "Bypass Tender"],
-    status: "pending",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation:
-      "Nilai Rp 75.000.000 seharusnya lewat tender terbuka (threshold Rp 50jt). Ada self-approval.",
+    department: "IT",
+    amountTotal: 75000000,
+    fraudScore: 52,
+    flags: ["Lewati Proses Tender"],
+    status: "alert",
+    procurementMethod: "penunjukan_langsung",
+    aiExplanation: "Nilai Rp 75.000.000 seharusnya melalui tender terbuka (ambang batas Rp 50jt).",
+    employeeId: "emp-uuid-003",
+    employeeName: "Rina Kusuma",
+    requesterId: "user-uuid-001",
+    requesterName: "Dewi Operator",
+    reviewerName: null,
+    createdAt: "2026-04-11T10:00:00.000Z",
+    updatedAt: "2026-04-11T10:00:00.000Z",
   },
   {
-    id: "PRC-0013",
-    docNumber: "PO-2026-0829",
-    date: "3 Apr 2026",
+    id: "uuid-004",
+    purchaseId: "PRC-0027",
+    purchaseDate: "2026-04-03T07:00:00.000Z",
     vendorName: "CV Berkah Jaya Abadi",
-    vendorTaxId: "05.678.901.2-345.000",
-    itemDescription: "Catering rapat direksi Q2",
-    businessUnit: "Secretary",
-    requester: "Lina Marlina",
-    approver: "Wawan Setiawan",
-    amount: 8200000,
+    itemDescription: "Katering rapat direksi Q2",
+    department: "Sekretariat",
+    amountTotal: 8200000,
     fraudScore: 38,
-    flags: ["Inflated Amount"],
-    status: "pending",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation: "Rp 328.000/orang — 60% di atas rata-rata historis kategori ini.",
+    flags: ["Nilai Tidak Wajar"],
+    status: "alert",
+    procurementMethod: "pengadaan_langsung",
+    aiExplanation: "Rp 328.000 per orang — 60% di atas rata-rata historis kategori ini.",
+    employeeId: "emp-uuid-004",
+    employeeName: "Lina Marlina",
+    requesterId: "user-uuid-001",
+    requesterName: "Dewi Operator",
+    reviewerName: null,
+    createdAt: "2026-04-03T07:00:00.000Z",
+    updatedAt: "2026-04-03T07:00:00.000Z",
   },
   {
-    id: "PRC-0014",
-    docNumber: "PO-2026-0862",
-    date: "8 Apr 2026",
+    id: "uuid-005",
+    purchaseId: "PRC-0045",
+    purchaseDate: "2026-04-14T11:00:00.000Z",
+    vendorName: "PT Bangun Karya Nusantara",
+    itemDescription: "Renovasi ruang meeting lantai 2",
+    department: "Building Management",
+    amountTotal: 95000000,
+    fraudScore: null,
+    flags: [],
+    status: "pending",
+    procurementMethod: "tender_terbuka",
+    aiExplanation: null,
+    employeeId: "emp-uuid-005",
+    employeeName: "Sigit Purnomo",
+    requesterId: "user-uuid-002",
+    requesterName: "Budi Operator",
+    reviewerName: null,
+    createdAt: "2026-04-14T11:00:00.000Z",
+    updatedAt: "2026-04-14T11:00:00.000Z",
+  },
+  {
+    id: "uuid-006",
+    purchaseId: "PRC-0043",
+    purchaseDate: "2026-04-13T08:30:00.000Z",
+    vendorName: "CV Teknologi Maju",
+    itemDescription: "Pengadaan printer & toner Q2",
+    department: "General Affairs",
+    amountTotal: 12000000,
+    fraudScore: null,
+    flags: [],
+    status: "pending",
+    procurementMethod: "pengadaan_langsung",
+    aiExplanation: null,
+    employeeId: "emp-uuid-001",
+    employeeName: "Hendra Wijaya",
+    requesterId: "user-uuid-002",
+    requesterName: "Budi Operator",
+    reviewerName: null,
+    createdAt: "2026-04-13T08:30:00.000Z",
+    updatedAt: "2026-04-13T08:30:00.000Z",
+  },
+  {
+    id: "uuid-007",
+    purchaseId: "PRC-0033",
+    purchaseDate: "2026-04-08T09:00:00.000Z",
     vendorName: "PT Mitra Teknologi Nusantara",
-    vendorTaxId: "02.345.678.9-012.000",
     itemDescription: "Lisensi software ERP tahunan",
-    businessUnit: "IT",
-    requester: "Fajar Nugroho",
-    approver: "Hendri Saputra",
-    amount: 120000000,
+    department: "IT",
+    amountTotal: 120000000,
     fraudScore: 22,
     flags: [],
-    status: "auto-approved",
-    procurementMethod: "Tender Terbuka",
+    status: "auto_approved",
+    procurementMethod: "tender_terbuka",
     aiExplanation: "Tidak ditemukan anomali. Vendor terverifikasi, tender sesuai prosedur.",
+    employeeId: "emp-uuid-006",
+    employeeName: "Fajar Nugroho",
+    requesterId: "user-uuid-001",
+    requesterName: "Dewi Operator",
+    reviewerName: null,
+    createdAt: "2026-04-08T09:00:00.000Z",
+    updatedAt: "2026-04-08T09:00:00.000Z",
   },
   {
-    id: "PRC-0015",
-    docNumber: "PO-2026-0771",
-    date: "25 Mar 2026",
+    id: "uuid-008",
+    purchaseId: "PRC-0018",
+    purchaseDate: "2026-03-25T07:00:00.000Z",
     vendorName: "PT Infrastruktur Andalan",
-    vendorTaxId: "04.567.890.1-234.000",
     itemDescription: "Perbaikan AC gedung lantai 3-5",
-    businessUnit: "Building Management",
-    requester: "Sigit Purnomo",
-    approver: "Darmawan",
-    amount: 42000000,
+    department: "Building Management",
+    amountTotal: 42000000,
     fraudScore: 15,
     flags: [],
     status: "approved",
-    procurementMethod: "Seleksi Langsung",
+    procurementMethod: "seleksi_langsung",
     aiExplanation: "Transaksi normal. Vendor terpercaya, 12 riwayat transaksi sebelumnya.",
+    employeeId: "emp-uuid-005",
+    employeeName: "Sigit Purnomo",
+    requesterId: "user-uuid-001",
+    requesterName: "Dewi Operator",
+    reviewerName: "Sari Auditor",
+    createdAt: "2026-03-25T07:00:00.000Z",
+    updatedAt: "2026-03-26T10:00:00.000Z",
   },
   {
-    id: "PRC-0016",
-    docNumber: "PO-2026-0798",
-    date: "28 Mar 2026",
+    id: "uuid-009",
+    purchaseId: "PRC-0021",
+    purchaseDate: "2026-03-28T08:00:00.000Z",
     vendorName: "UD Stationery Plus",
-    vendorTaxId: "01.234.567.8-901.000",
     itemDescription: "Alat Tulis Kantor — bulk order Q1",
-    businessUnit: "General Affairs",
-    requester: "Hendra Wijaya",
-    approver: "Hendra Wijaya",
-    amount: 3750000,
+    department: "General Affairs",
+    amountTotal: 3750000,
     fraudScore: 85,
-    flags: ["Duplicate Invoice", "Self Approval"],
+    flags: ["Duplikasi Invoice", "Persetujuan Mandiri"],
     status: "rejected",
-    procurementMethod: "Penunjukan Langsung",
+    procurementMethod: "penunjukan_langsung",
     aiExplanation: "Duplikasi dari PRC-0036. Ditolak oleh auditor senior.",
-  },
-  {
-    id: "PRC-0017",
-    docNumber: "PO-2026-0892",
-    date: "10 Apr 2026",
-    vendorName: "UD Stationery Plus",
-    vendorTaxId: "01.234.567.8-901.000",
-    itemDescription: "Alat Tulis Kantor — bulk order Q2",
-    businessUnit: "General Affairs",
-    requester: "Hendra Wijaya",
-    approver: "Hendra Wijaya",
-    amount: 3750000,
-    fraudScore: 91,
-    flags: ["Duplicate Invoice", "Self Approval"],
-    status: "high-alert",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation:
-      "Invoice identik dengan PRC-0021. Requester dan approver orang yang sama — pelanggaran Segregation of Duties.",
-  },
-  {
-    id: "PRC-0018",
-    docNumber: "PO-2026-0901",
-    date: "12 Apr 2026",
-    vendorName: "CV Maju Bersama",
-    vendorTaxId: "07.891.234.5-678.000",
-    itemDescription: "Pengadaan ATK & perlengkapan kantor",
-    businessUnit: "Procurement",
-    requester: "Dewi Rahayu",
-    approver: "Suharto Wibowo",
-    amount: 18500000,
-    fraudScore: 74,
-    flags: ["Price Markup", "Vendor Baru"],
-    status: "high-alert",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation: "Vendor baru terdaftar 14 hari sebelum PO. Harga 280% di atas e-Katalog LKPP.",
-  },
-  {
-    id: "PRC-0019",
-    docNumber: "PO-2026-0887",
-    date: "11 Apr 2026",
-    vendorName: "PT Solusi Digital Indonesia",
-    vendorTaxId: "03.456.789.0-123.000",
-    itemDescription: "Jasa konsultasi pengembangan sistem IT",
-    businessUnit: "IT",
-    requester: "Rina Kusuma",
-    approver: "Rina Kusuma",
-    amount: 75000000,
-    fraudScore: 61,
-    flags: ["Self Approval", "Bypass Tender"],
-    status: "pending",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation:
-      "Nilai Rp 75.000.000 seharusnya lewat tender terbuka (threshold Rp 50jt). Ada self-approval.",
-  },
-  {
-    id: "PRC-0020",
-    docNumber: "PO-2026-0829",
-    date: "3 Apr 2026",
-    vendorName: "CV Berkah Jaya Abadi",
-    vendorTaxId: "05.678.901.2-345.000",
-    itemDescription: "Catering rapat direksi Q2",
-    businessUnit: "Secretary",
-    requester: "Lina Marlina",
-    approver: "Wawan Setiawan",
-    amount: 8200000,
-    fraudScore: 38,
-    flags: ["Inflated Amount"],
-    status: "pending",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation: "Rp 328.000/orang — 60% di atas rata-rata historis kategori ini.",
-  },
-  {
-    id: "PRC-0021",
-    docNumber: "PO-2026-0862",
-    date: "8 Apr 2026",
-    vendorName: "PT Mitra Teknologi Nusantara",
-    vendorTaxId: "02.345.678.9-012.000",
-    itemDescription: "Lisensi software ERP tahunan",
-    businessUnit: "IT",
-    requester: "Fajar Nugroho",
-    approver: "Hendri Saputra",
-    amount: 120000000,
-    fraudScore: 22,
-    flags: [],
-    status: "auto-approved",
-    procurementMethod: "Tender Terbuka",
-    aiExplanation: "Tidak ditemukan anomali. Vendor terverifikasi, tender sesuai prosedur.",
-  },
-  {
-    id: "PRC-0022",
-    docNumber: "PO-2026-0771",
-    date: "25 Mar 2026",
-    vendorName: "PT Infrastruktur Andalan",
-    vendorTaxId: "04.567.890.1-234.000",
-    itemDescription: "Perbaikan AC gedung lantai 3-5",
-    businessUnit: "Building Management",
-    requester: "Sigit Purnomo",
-    approver: "Darmawan",
-    amount: 42000000,
-    fraudScore: 15,
-    flags: [],
-    status: "approved",
-    procurementMethod: "Seleksi Langsung",
-    aiExplanation: "Transaksi normal. Vendor terpercaya, 12 riwayat transaksi sebelumnya.",
-  },
-  {
-    id: "PRC-0023",
-    docNumber: "PO-2026-0798",
-    date: "28 Mar 2026",
-    vendorName: "UD Stationery Plus",
-    vendorTaxId: "01.234.567.8-901.000",
-    itemDescription: "Alat Tulis Kantor — bulk order Q1",
-    businessUnit: "General Affairs",
-    requester: "Hendra Wijaya",
-    approver: "Hendra Wijaya",
-    amount: 3750000,
-    fraudScore: 85,
-    flags: ["Duplicate Invoice", "Self Approval"],
-    status: "rejected",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation: "Duplikasi dari PRC-0036. Ditolak oleh auditor senior.",
-  },
-  {
-    id: "PRC-0024",
-    docNumber: "PO-2026-0892",
-    date: "10 Apr 2026",
-    vendorName: "UD Stationery Plus",
-    vendorTaxId: "01.234.567.8-901.000",
-    itemDescription: "Alat Tulis Kantor — bulk order Q2",
-    businessUnit: "General Affairs",
-    requester: "Hendra Wijaya",
-    approver: "Hendra Wijaya",
-    amount: 3750000,
-    fraudScore: 91,
-    flags: ["Duplicate Invoice", "Self Approval"],
-    status: "high-alert",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation:
-      "Invoice identik dengan PRC-0021. Requester dan approver orang yang sama — pelanggaran Segregation of Duties.",
-  },
-  {
-    id: "PRC-0025",
-    docNumber: "PO-2026-0901",
-    date: "12 Apr 2026",
-    vendorName: "CV Maju Bersama",
-    vendorTaxId: "07.891.234.5-678.000",
-    itemDescription: "Pengadaan ATK & perlengkapan kantor",
-    businessUnit: "Procurement",
-    requester: "Dewi Rahayu",
-    approver: "Suharto Wibowo",
-    amount: 18500000,
-    fraudScore: 74,
-    flags: ["Price Markup", "Vendor Baru"],
-    status: "high-alert",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation: "Vendor baru terdaftar 14 hari sebelum PO. Harga 280% di atas e-Katalog LKPP.",
-  },
-  {
-    id: "PRC-0026",
-    docNumber: "PO-2026-0887",
-    date: "11 Apr 2026",
-    vendorName: "PT Solusi Digital Indonesia",
-    vendorTaxId: "03.456.789.0-123.000",
-    itemDescription: "Jasa konsultasi pengembangan sistem IT",
-    businessUnit: "IT",
-    requester: "Rina Kusuma",
-    approver: "Rina Kusuma",
-    amount: 75000000,
-    fraudScore: 61,
-    flags: ["Self Approval", "Bypass Tender"],
-    status: "pending",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation:
-      "Nilai Rp 75.000.000 seharusnya lewat tender terbuka (threshold Rp 50jt). Ada self-approval.",
-  },
-  {
-    id: "PRC-0027",
-    docNumber: "PO-2026-0829",
-    date: "3 Apr 2026",
-    vendorName: "CV Berkah Jaya Abadi",
-    vendorTaxId: "05.678.901.2-345.000",
-    itemDescription: "Catering rapat direksi Q2",
-    businessUnit: "Secretary",
-    requester: "Lina Marlina",
-    approver: "Wawan Setiawan",
-    amount: 8200000,
-    fraudScore: 38,
-    flags: ["Inflated Amount"],
-    status: "pending",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation: "Rp 328.000/orang — 60% di atas rata-rata historis kategori ini.",
-  },
-  {
-    id: "PRC-0028",
-    docNumber: "PO-2026-0862",
-    date: "8 Apr 2026",
-    vendorName: "PT Mitra Teknologi Nusantara",
-    vendorTaxId: "02.345.678.9-012.000",
-    itemDescription: "Lisensi software ERP tahunan",
-    businessUnit: "IT",
-    requester: "Fajar Nugroho",
-    approver: "Hendri Saputra",
-    amount: 120000000,
-    fraudScore: 22,
-    flags: [],
-    status: "auto-approved",
-    procurementMethod: "Tender Terbuka",
-    aiExplanation: "Tidak ditemukan anomali. Vendor terverifikasi, tender sesuai prosedur.",
-  },
-  {
-    id: "PRC-0029",
-    docNumber: "PO-2026-0771",
-    date: "25 Mar 2026",
-    vendorName: "PT Infrastruktur Andalan",
-    vendorTaxId: "04.567.890.1-234.000",
-    itemDescription: "Perbaikan AC gedung lantai 3-5",
-    businessUnit: "Building Management",
-    requester: "Sigit Purnomo",
-    approver: "Darmawan",
-    amount: 42000000,
-    fraudScore: 15,
-    flags: [],
-    status: "approved",
-    procurementMethod: "Seleksi Langsung",
-    aiExplanation: "Transaksi normal. Vendor terpercaya, 12 riwayat transaksi sebelumnya.",
-  },
-  {
-    id: "PRC-0030",
-    docNumber: "PO-2026-0798",
-    date: "28 Mar 2026",
-    vendorName: "UD Stationery Plus",
-    vendorTaxId: "01.234.567.8-901.000",
-    itemDescription: "Alat Tulis Kantor — bulk order Q1",
-    businessUnit: "General Affairs",
-    requester: "Hendra Wijaya",
-    approver: "Hendra Wijaya",
-    amount: 3750000,
-    fraudScore: 85,
-    flags: ["Duplicate Invoice", "Self Approval"],
-    status: "rejected",
-    procurementMethod: "Penunjukan Langsung",
-    aiExplanation: "Duplikasi dari PRC-0036. Ditolak oleh auditor senior.",
+    employeeId: "emp-uuid-001",
+    employeeName: "Hendra Wijaya",
+    requesterId: "user-uuid-001",
+    requesterName: "Dewi Operator",
+    reviewerName: "Sari Auditor",
+    createdAt: "2026-03-28T08:00:00.000Z",
+    updatedAt: "2026-03-29T14:00:00.000Z",
   },
 ];
 
-// ── Toggle ini untuk test empty state ─────────────────────────────────────────
-// TODO integrasi: ganti dengan: const HAS_DATA = data.length > 0
+// Toggle untuk test empty state
+// TODO integrasi: hapus ini, ganti dengan: const HAS_DATA = data.length > 0
 export const HAS_DATA = true;
+
+// ─── Fraud risk config (dipakai ProcurementTable & DetailDrawer) ───────────────
+export function getFraudRiskConfig(score: number | null) {
+  if (score === null) return {
+    color: "#6366f1", bg: "rgba(99,102,241,0.08)",
+    border: "rgba(99,102,241,0.20)", label: "Menunggu AI",
+  };
+  if (score >= 70) return {
+    color: "#ef4444", bg: "rgba(239,68,68,0.08)",
+    border: "rgba(239,68,68,0.20)", label: "Risiko Tinggi",
+  };
+  if (score >= 30) return {
+    color: "#f59e0b", bg: "rgba(245,158,11,0.08)",
+    border: "rgba(245,158,11,0.20)", label: "Perlu Ditinjau",
+  };
+  return {
+    color: "#10b981", bg: "rgba(16,185,129,0.08)",
+    border: "rgba(16,185,129,0.20)", label: "Aman",
+  };
+}
+
+// ─── Table column headers ──────────────────────────────────────────────────────
+export const TABLE_COL_HEADERS = [
+  "ID Pembelian", "Tanggal", "Vendor", "Item & Karyawan",
+  "Departemen", "Metode", "Total", "Skor", "Temuan AI", "Status", "",
+];

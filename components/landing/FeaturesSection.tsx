@@ -105,10 +105,10 @@ export default function FeaturesSection() {
         </h2>
         <p style={{
           fontSize: "clamp(14px, 1.6vw, 17px)", fontWeight: 300, color: "var(--ts)",
-          lineHeight: 1.65, maxWidth: "520px", margin: "0 auto",
+          lineHeight: 1.65, maxWidth: "560px", margin: "0 auto",
           padding: "0 8px",
         }}>
-          Fradara menggabungkan deteksi fraud expense dan procurement dalam satu dashboard terpusat — tanpa tools enterprise yang mahal.
+          Fradara menggabungkan deteksi fraud expense, procurement, dan vendor dalam satu dashboard terpusat — tanpa tools enterprise yang mahal.
         </p>
       </div>
 

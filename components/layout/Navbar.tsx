@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ui/ThemeProvider";
+import Image from "next/image";
 
 export default function Navbar() {
   const { theme, toggle } = useTheme();
@@ -74,17 +75,30 @@ export default function Navbar() {
               color: "var(--tp)", textDecoration: "none", letterSpacing: "-0.4px",
             }}
           >
-            <div style={{
-              width: "28px", height: "28px", borderRadius: "7px",
-              background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-              boxShadow: "0 0 14px rgba(16,185,129,0.35)",
-            }}>
-              <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.4" opacity="0.4"/>
-                <path d="M6 10.5l3 3L14.5 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <div
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "8px",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Image
+                src="/logo.png"
+                alt="Fradara Logo"
+                width={32}
+                height={32}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+                priority
+              />
             </div>
             <span className="nav-logo-text" style={{ fontSize: "17px" }}>Fradara</span>
           </Link>

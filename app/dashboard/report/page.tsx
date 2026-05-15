@@ -9,7 +9,7 @@ import { ReportHistory } from "@/components/dashboard/report/ReportHistory";
 import { usePageTitle } from "@/contexts/TopBarContext";
 
 export default function ReportGeneratorPage() {
-  usePageTitle({ title: "Report" });
+  usePageTitle({ title: "Laporan" });
 
   const [scope, setScope] = useState<ReportScope>("all");
   const [reportType, setReportType] = useState<ReportType>("summary");

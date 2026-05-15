@@ -1,21 +1,21 @@
-import { Vendor } from "@/data/vendors";
+"use client";
 
 interface SummaryStripProps {
-  vendors: Vendor[];
+  vendors: any[];
   isMobile?: boolean;
 }
 
 export function SummaryStrip({ vendors, isMobile }: SummaryStripProps) {
   const counts = {
     blacklisted: vendors.filter(v => v.status === "blacklisted").length,
-    watchlist:   vendors.filter(v => v.status === "watchlist").length,
+    inactive:    vendors.filter(v => v.status === "inactive").length,
     active:      vendors.filter(v => v.status === "active").length,
   };
 
   const items = [
-    { label: "Blacklisted", count: counts.blacklisted, color: "#ef4444", bg: "rgba(239,68,68,0.08)",    border: "rgba(239,68,68,0.18)" },
-    { label: "Watchlist",   count: counts.watchlist,   color: "#f59e0b", bg: "rgba(245,158,11,0.08)",   border: "rgba(245,158,11,0.18)" },
-    { label: "Active",      count: counts.active,      color: "var(--em)", bg: "var(--em-subtle)",      border: "rgba(16,185,129,0.18)" },
+    { label: "Blacklisted", count: counts.blacklisted, color: "#ef4444", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)" },
+    { label: "Nonaktif",    count: counts.inactive,    color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.18)" },
+    { label: "Aktif",       count: counts.active,      color: "var(--em)", bg: "var(--em-subtle)",     border: "rgba(16,185,129,0.18)" },
   ];
 
   return (

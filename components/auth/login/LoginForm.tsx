@@ -58,7 +58,7 @@ export default function LoginForm({
 
         {/* Password */}
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+          {/* <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
             <label className={styles.fieldLabel} style={{ margin: 0 }}>Password</label>
             <a
               href="/forgot-password"
@@ -68,7 +68,7 @@ export default function LoginForm({
             >
               Lupa password?
             </a>
-          </div>
+          </div> */}
           <input
             type="password"
             className={styles.loginInput}

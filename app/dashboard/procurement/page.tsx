@@ -46,7 +46,37 @@ export default function ProcurementPage() {
       if (Array.isArray(data)) validArray = data;
       else if (data && Array.isArray((data as any).data)) validArray = (data as any).data;
       else if (data && Array.isArray((data as any).items)) validArray = (data as any).items;
-      setTransactions(validArray as unknown as ProcurementTransaction[]);
+
+      // ─── MAGIC FIX: KITA BERSIHKAN DATANYA DI SINI ───
+      const parsedArray = validArray.map((item) => {
+        // 1. Fix Amount: Ambil dari 'amount' atau 'amountTotal' mana yang ada
+        const cleanAmount = Number(item.amount) || Number(item.amountTotal) || 0;
+
+        // 2. Fix Tanggal: JS gak ngerti "Mei", jadi kita translate dulu ke Inggris
+        let cleanDate = item.purchaseDate || item.date || item.createdAt;
+        if (typeof cleanDate === "string") {
+          cleanDate = cleanDate
+            .replace("Mei", "May")
+            .replace("Agu", "Aug")
+            .replace("Okt", "Oct")
+            .replace("Des", "Dec");
+        }
+        
+        // Tes apakah format tanggalnya udah benar
+        const parsedDate = new Date(cleanDate);
+        const finalDate = isNaN(parsedDate.getTime()) ? item.createdAt : parsedDate.toISOString();
+
+        return {
+          ...item,
+          // Kita masukin dua-duanya biar Summary Card & Table aman baca datanya
+          amount: cleanAmount,
+          amountTotal: cleanAmount,
+          purchaseDate: finalDate,
+          date: finalDate,
+        };
+      });
+
+      setTransactions(parsedArray as unknown as ProcurementTransaction[]);
     } catch (error) {
       console.error("Gagal mengambil data transaksi:", error);
     } finally {

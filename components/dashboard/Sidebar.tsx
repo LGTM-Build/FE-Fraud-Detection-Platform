@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getUser, clearTokens, AuthUser, getRefreshToken } from "@/lib/auth";
 import { api } from "@/lib/api";
+import Image from "next/image";
 
 type Role = "super_user" | "super_admin" | "auditor" | "operator" | "department_head";
 
@@ -228,11 +229,19 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           </button>
         ) : (
           <>
-            <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "linear-gradient(135deg, var(--em) 0%, var(--em2) 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 14px rgba(16,185,129,0.25)" }}>
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.4" opacity="0.4"/>
-                <path d="M6 10.5l3 3L14.5 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <div style={{ width: "30px", height: "30px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Image
+                src="/logo.png"
+                alt="Fradara Logo"
+                width={32}
+                height={32}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+                priority
+              />
             </div>
             <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "17px", color: "var(--tp)", letterSpacing: "-0.4px", flex: 1 }}>
               Fradara

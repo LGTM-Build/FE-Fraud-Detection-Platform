@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import {
   ProcurementTransaction, statusConfig, fmt, fmtDate,
@@ -10,7 +11,6 @@ interface DetailModalProps {
   tx: ProcurementTransaction;
   onClose: () => void;
   isMobile?: boolean;
-  // TODO integrasi: sambungkan ke PATCH /api/procurement-transactions/:id/status
   onApprove?: (id: string) => Promise<void>;
   onReject?: (id: string) => Promise<void>;
 }
@@ -19,6 +19,11 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject }: Deta
   const sc   = statusConfig[tx.status];
   const risk = getFraudRiskConfig(tx.fraudScore);
   const canAct = tx.status === "alert" || tx.status === "high_alert";
+  
+  // FIX UTAMA: Kita paksa styling warna ungu khusus untuk status pending
+  const isPending = tx.status === "pending";
+  const riskBg = isPending ? "rgba(99,102,241,0.08)" : risk.bg;
+  const riskBorder = isPending ? "rgba(99,102,241,0.20)" : risk.border;
 
   const [actionLoading, setActionLoading] = useState<"approve" | "reject" | null>(null);
 
@@ -33,9 +38,8 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject }: Deta
   const detailRows = [
     { label: "Item",        value: tx.itemDescription },
     { label: "Departemen",  value: tx.department ?? "—" },
-    { label: "Karyawan",    value: tx.employeeName ?? "—" },
-    { label: "Diinput oleh",value: tx.requesterName },
-    { label: "Direview oleh",value: tx.reviewerName ?? "Belum direview" },
+    { label: "Vendor",      value: tx.vendorName },
+    { label: "Diinput oleh",value: tx.requesterName ?? "—" },
     { label: "Metode",      value: procurementMethodLabels[tx.procurementMethod] ?? tx.procurementMethod },
     { label: "Tanggal",     value: fmtDate(tx.purchaseDate) },
     { label: "Total",       value: fmt(tx.amountTotal), highlight: true },
@@ -67,12 +71,14 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject }: Deta
             <DesktopHeader tx={tx} sc={sc} onClose={onClose} />
             <div style={{ flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "1fr 1fr" }}>
 
-              {/* Left: skor + analisis AI + temuan */}
+              {/* KIRI: Skor + Analisis AI */}
               <div style={{ padding: "24px", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "20px" }}>
-                {/* Skor */}
-                <div style={{ padding: "20px", borderRadius: "14px", background: risk.bg, border: `1px solid ${risk.border}` }}>
+                
+                {/* Kotak Skor Kecurangan */}
+                <div style={{ padding: "20px", borderRadius: "14px", background: riskBg, border: `1px solid ${riskBorder}` }}>
                   <div style={{ fontSize: "11px", color: "var(--tm)", marginBottom: "12px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px" }}>Skor Kecurangan</div>
-                  {tx.fraudScore !== null ? (
+                  
+                  {!isPending && tx.fraudScore !== null && tx.fraudScore !== undefined ? (
                     <div style={{ display: "flex", alignItems: "flex-end", gap: "16px", marginBottom: "12px" }}>
                       <span style={{ fontFamily: "'Syne', sans-serif", fontSize: "56px", fontWeight: 800, color: risk.color, lineHeight: 1 }}>{tx.fraudScore}</span>
                       <div style={{ flex: 1, paddingBottom: "6px" }}>
@@ -83,20 +89,11 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject }: Deta
                       </div>
                     </div>
                   ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" style={{ animation: "spin 2s linear infinite" }}>
-                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
-                      </svg>
-                      <div>
-                        <div style={{ fontSize: "14px", fontWeight: 600, color: "#6366f1" }}>Sedang Dianalisis</div>
-                        <div style={{ fontSize: "12px", color: "var(--tm)", marginTop: "2px" }}>AI sedang memproses data ini</div>
-                      </div>
-                      <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
-                    </div>
+                    <div style={{ fontSize: "14px", fontWeight: 600, color: "#6366f1" }}>Sedang Dianalisis AI...</div>
                   )}
                 </div>
 
-                {/* Analisis AI */}
+                {/* Kotak Analisis AI */}
                 <div style={{ padding: "16px 18px", borderRadius: "14px", background: "var(--surface-2)", border: "1px solid var(--border)", flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--em)" strokeWidth="2" strokeLinecap="round">
@@ -104,13 +101,13 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject }: Deta
                     </svg>
                     <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--em)", textTransform: "uppercase", letterSpacing: "0.8px" }}>Analisis AI</span>
                   </div>
-                  <p style={{ fontSize: "13px", color: "var(--ts)", lineHeight: 1.7, fontWeight: 300 }}>
-                    {tx.aiExplanation ?? "Analisis AI belum tersedia. Data masih dalam antrean pemrosesan."}
+                  <p style={{ fontSize: "13px", color: "var(--ts)", lineHeight: 1.7, fontWeight: 300, margin: 0 }}>
+                    {tx.aiExplanation ?? "Analisis AI belum tersedia."}
                   </p>
                 </div>
 
-                {/* Temuan AI */}
-                {tx.flags.length > 0 && (
+                {/* Temuan AI (Sembunyiin dulu kalau masih diproses) */}
+                {!isPending && tx.flags && tx.flags.length > 0 && (
                   <div>
                     <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--tm)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "8px" }}>Temuan AI</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
@@ -122,15 +119,8 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject }: Deta
                 )}
               </div>
 
-              {/* Right: vendor + detail + status */}
+              {/* KANAN: Detail Info */}
               <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
-                <div>
-                  <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--tm)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>Info Vendor</div>
-                  <div style={{ padding: "14px 16px", borderRadius: "12px", background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                    <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--tp)" }}>{tx.vendorName}</div>
-                  </div>
-                </div>
-
                 <div>
                   <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--tm)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "12px" }}>Detail Transaksi</div>
                   <div style={{ display: "flex", flexDirection: "column" }}>
@@ -143,7 +133,7 @@ export function DetailModal({ tx, onClose, isMobile, onApprove, onReject }: Deta
                   </div>
                 </div>
 
-                <div style={{ padding: "14px 16px", borderRadius: "12px", background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ padding: "14px 16px", borderRadius: "12px", background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: "10px", marginTop: "auto" }}>
                   <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: sc.dot, flexShrink: 0 }} />
                   <span style={{ fontSize: "13px", color: "var(--tm)" }}>Status saat ini:</span>
                   <span style={{ padding: "4px 14px", borderRadius: "100px", background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, fontSize: "12px", fontWeight: 500 }}>{sc.label}</span>
@@ -164,8 +154,6 @@ function DesktopHeader({ tx, sc, onClose }: Readonly<{ tx: ProcurementTransactio
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
           <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--em)" }}>{tx.purchaseId ?? tx.id.slice(0, 8)}</span>
-          {/* <span style={{ fontSize: "12px", color: "var(--tm)" }}>{fmtDate(tx.purchaseDate)}</span> */}
-          {/* <span style={{ padding: "2px 10px", borderRadius: "100px", background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, fontSize: "11px", fontWeight: 500 }}>{sc.label}</span> */}
         </div>
         <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--tp)", letterSpacing: "-0.4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {tx.itemDescription}
@@ -203,11 +191,15 @@ function MobileHeader({ tx, sc, onClose }: { tx: ProcurementTransaction; sc: any
 }
 
 function MobileBody({ tx, risk, detailRows, sc }: { tx: ProcurementTransaction; risk: ReturnType<typeof getFraudRiskConfig>; detailRows: { label: string; value: string; highlight?: boolean }[]; sc: any }) {
+  const isPending = tx.status === "pending";
+  const riskBg = isPending ? "rgba(99,102,241,0.08)" : risk.bg;
+  const riskBorder = isPending ? "rgba(99,102,241,0.20)" : risk.border;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <div style={{ padding: "16px", borderRadius: "12px", background: risk.bg, border: `1px solid ${risk.border}` }}>
+      <div style={{ padding: "16px", borderRadius: "12px", background: riskBg, border: `1px solid ${riskBorder}` }}>
         <div style={{ fontSize: "11px", color: "var(--tm)", marginBottom: "8px", fontWeight: 500 }}>Skor Kecurangan</div>
-        {tx.fraudScore !== null ? (
+        {!isPending && tx.fraudScore !== null && tx.fraudScore !== undefined ? (
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ fontFamily: "'Syne', sans-serif", fontSize: "40px", fontWeight: 800, color: risk.color, lineHeight: 1 }}>{tx.fraudScore}</span>
             <div style={{ flex: 1 }}>
@@ -218,7 +210,7 @@ function MobileBody({ tx, risk, detailRows, sc }: { tx: ProcurementTransaction; 
             </div>
           </div>
         ) : (
-          <div style={{ fontSize: "13px", color: "#6366f1" }}>Sedang dianalisis AI…</div>
+          <div style={{ fontSize: "14px", fontWeight: 600, color: "#6366f1" }}>Sedang Dianalisis AI...</div>
         )}
       </div>
 
@@ -229,12 +221,12 @@ function MobileBody({ tx, risk, detailRows, sc }: { tx: ProcurementTransaction; 
           </svg>
           <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--em)", textTransform: "uppercase", letterSpacing: "0.8px" }}>Analisis AI</span>
         </div>
-        <p style={{ fontSize: "13px", color: "var(--ts)", lineHeight: 1.65, fontWeight: 300 }}>
-          {tx.aiExplanation ?? "Analisis AI belum tersedia. Data masih dalam antrean pemrosesan."}
+        <p style={{ fontSize: "13px", color: "var(--ts)", lineHeight: 1.65, fontWeight: 300, margin: 0 }}>
+          {tx.aiExplanation ?? "Analisis AI belum tersedia."}
         </p>
       </div>
 
-      {tx.flags.length > 0 && (
+      {!isPending && tx.flags && tx.flags.length > 0 && (
         <div>
           <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--tm)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "8px" }}>Temuan AI</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>

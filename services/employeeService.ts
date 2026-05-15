@@ -41,8 +41,7 @@ export async function createEmployee(data: {
 
 export async function updateEmployee(id: string, data: any) {
   try {
-    // Tambahkan <any> pada method PATCH
-    const res = await api.patch<any>(`/api/employees/${id}`, data); 
+    const res = await api.put<any>(`/api/employees/${id}`, data); 
     return res.data;
   } catch (error) {
     console.error("Gagal update data karyawan:", error);

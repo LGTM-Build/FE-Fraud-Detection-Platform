@@ -1,4 +1,5 @@
 import styles from "@/app/(auth)/register/register.module.css";
+import Image from "next/image";
 
 const FEATURES = [
   "Deteksi anomali transaksi secara real-time",
@@ -69,23 +70,23 @@ export default function RegisterLeftPanel() {
               width: "30px",
               height: "30px",
               borderRadius: "8px",
-              background: "linear-gradient(135deg, #10b981, #6ee7b7)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 0 16px rgba(16,185,129,0.50)",
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-              <circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.4" opacity="0.4" />
-              <path
-                d="M6 10.5l3 3L14.5 7"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Image
+              src="/logo.png"
+              alt="Fradara Logo"
+              width={32}
+              height={32}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+              priority
+            />
           </div>
           Fradara
         </div>

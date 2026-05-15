@@ -147,7 +147,7 @@ function EmptyOnboardingBanner({ onImportClick }: { onImportClick: () => void })
             whiteSpace: "nowrap", cursor: "pointer",
           }}
         >
-          Ke Import Center
+          Import Data
         </button>
       </div>
 

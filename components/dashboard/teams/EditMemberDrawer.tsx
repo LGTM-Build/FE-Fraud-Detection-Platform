@@ -18,6 +18,53 @@ const roleDescriptions = [
   { id: "super_admin", label: "Super Admin", desc: "Akses penuh sistem & manajemen tim", color: "#dc2626", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.20)" },
 ];
 
+function CustomSelect({ name, value, options, onChange, placeholder, style, disabled }: any) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+  const selectedOption = options.find((o: any) => o.value === value);
+
+  return (
+    <div
+      style={{ position: "relative", width: "100%", outline: "none" }}
+      tabIndex={0}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsOpen(false); }}
+    >
+      <div
+        className="add-input"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        style={{ ...style, cursor: disabled ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", opacity: disabled ? 0.6 : 1 }}
+      >
+        <span style={{ color: value ? "var(--tp)" : "var(--tm)" }}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0, color: "var(--tm)" }}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+      {isOpen && (
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", zIndex: 100, boxShadow: "0 8px 32px rgba(0,0,0,0.25)", maxHeight: "220px", overflowY: "auto" }}>
+          {options.map((opt: any) => {
+            const isSelected = value === opt.value;
+            const isHovered = hoveredOption === opt.value;
+            return (
+              <div
+                key={opt.value}
+                style={{ padding: "10px 14px", fontSize: "13px", fontFamily: '"DM Sans", sans-serif', fontWeight: isSelected ? 500 : 300, color: isSelected || isHovered ? "var(--em)" : "var(--tp)", background: isSelected || isHovered ? "var(--em-subtle)" : "transparent", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}
+                onMouseEnter={() => setHoveredOption(opt.value)}
+                onMouseLeave={() => setHoveredOption(null)}
+                onMouseDown={(e) => { e.preventDefault(); onChange({ target: { name, value: opt.value } }); setIsOpen(false); }}
+              >
+                {opt.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function EditMemberDrawer({ isOpen, onClose, isMobile, onSuccess, memberData }: EditMemberDrawerProps) {
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -48,7 +95,7 @@ export default function EditMemberDrawer({ isOpen, onClose, isMobile, onSuccess,
 
   if (!isOpen || !memberData) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | any) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -64,7 +111,6 @@ export default function EditMemberDrawer({ isOpen, onClose, isMobile, onSuccess,
         fullName: formData.fullName,
         email: formData.email,
         role: formData.role,
-        // Kirim null kalau dikosongkan agar backend bisa lepas tautannya
         employeeId: formData.employeeId || null,
       };
       await updateUser(memberData.id, payload);
@@ -98,8 +144,6 @@ export default function EditMemberDrawer({ isOpen, onClose, isMobile, onSuccess,
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
         @keyframes slideInBottom { from { transform: translateY(100%) } to { transform: translateY(0) } }
         .add-input:focus { border-color: var(--em) !important; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
-        .add-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px !important; }
-        .add-select:focus { border-color: var(--em) !important; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
       `}</style>
 
       <div style={{
@@ -130,30 +174,26 @@ export default function EditMemberDrawer({ isOpen, onClose, isMobile, onSuccess,
               <div><label style={labelStyle}>Email</label><input required type="email" className="add-input" name="email" value={formData.email} onChange={handleChange} style={inputStyle} /></div>
             </div>
 
-            {/* Employee Dropdown */}
             <div>
               <label style={labelStyle}>
                 Tautkan ke Karyawan
                 <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "var(--ts)", marginLeft: "6px" }}>(opsional)</span>
               </label>
-              <select
-                className="add-input add-select"
+              <CustomSelect
                 name="employeeId"
                 value={formData.employeeId}
                 onChange={handleChange}
-                style={{ ...inputStyle, cursor: "pointer" }}
+                placeholder={employeesLoading ? "Memuat daftar karyawan..." : "— Tidak ditautkan —"}
+                style={inputStyle}
                 disabled={employeesLoading}
-              >
-                <option value="">
-                  {employeesLoading ? "Memuat daftar karyawan..." : "— Tidak ditautkan —"}
-                </option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.fullName}{emp.department ? ` · ${emp.department}` : ""}{emp.position ? ` (${emp.position})` : ""}
-                  </option>
-                ))}
-              </select>
-              {/* Tampilkan info karyawan yang saat ini ditautkan */}
+                options={[
+                  { value: "", label: "— Tidak ditautkan —" },
+                  ...employees.map((emp) => ({
+                    value: emp.id,
+                    label: `${emp.fullName}${emp.department ? ` · ${emp.department}` : ""}${emp.position ? ` (${emp.position})` : ""}`,
+                  })),
+                ]}
+              />
               {formData.employeeId && !employeesLoading && (() => {
                 const linked = employees.find(e => e.id === formData.employeeId);
                 return linked ? (
@@ -164,23 +204,13 @@ export default function EditMemberDrawer({ isOpen, onClose, isMobile, onSuccess,
               })()}
             </div>
 
-            {/* Role Selection Cards */}
             <div style={{ marginTop: "4px" }}>
               <label style={labelStyle}>Ubah Role & Hak Akses</label>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {roleDescriptions.map((r) => {
                   const isSelected = formData.role === r.id;
                   return (
-                    <div
-                      key={r.id}
-                      onClick={() => handleRoleSelect(r.id)}
-                      style={{
-                        padding: "12px 14px", borderRadius: "10px", cursor: "pointer",
-                        border: `1px solid ${isSelected ? r.border : "var(--border)"}`,
-                        background: isSelected ? r.bg : "var(--surface-2)",
-                        display: "flex", alignItems: "center", gap: "12px", transition: "all 0.15s",
-                      }}
-                    >
+                    <div key={r.id} onClick={() => handleRoleSelect(r.id)} style={{ padding: "12px 14px", borderRadius: "10px", cursor: "pointer", border: `1px solid ${isSelected ? r.border : "var(--border)"}`, background: isSelected ? r.bg : "var(--surface-2)", display: "flex", alignItems: "center", gap: "12px", transition: "all 0.15s" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: "13px", fontWeight: 600, color: isSelected ? r.color : "var(--tp)", marginBottom: "2px" }}>{r.label}</div>
                         <div style={{ fontSize: "11px", color: "var(--tm)", lineHeight: 1.4 }}>{r.desc}</div>
@@ -200,7 +230,7 @@ export default function EditMemberDrawer({ isOpen, onClose, isMobile, onSuccess,
 
         <div style={{ padding: isMobile ? "16px" : "20px 28px", borderTop: "1px solid var(--border)", background: "var(--surface-2)", display: "flex", justifyContent: "flex-end", gap: "10px", flexShrink: 0 }}>
           <button type="button" onClick={onClose} style={{ flex: isMobile ? 1 : "none", padding: "10px 18px", borderRadius: "10px", border: "1px solid var(--border)", background: "transparent", color: "var(--ts)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Batal</button>
-          <button type="submit" form="edit-member-form" disabled={loading} style={{ flex: isMobile ? 1 : "none", padding: "10px 22px", borderRadius: "10px", border: "none", background: loading ? "var(--surface-2)" : "linear-gradient(135deg, var(--em), var(--em2))", color: loading ? "var(--tm)" : "#fff", fontSize: "13px", fontWeight: 500, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: loading ? "none" : "0 4px 16px rgba(16,185,129,0.25)" }}>
+          <button type="submit" form="edit-member-form" disabled={loading} style={{ flex: isMobile ? 1 : "none", padding: "10px 22px", borderRadius: "10px", border: "none", background: loading ? "var(--surface-2)" : "linear-gradient(135deg, var(--em), var(--em2))", color: loading ? "var(--tm)" : "var(--btn-pri-c)", fontSize: "13px", fontWeight: 500, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: loading ? "none" : "var(--em-glow-btn)" }}>
             {loading ? "Menyimpan..." : "Simpan Perubahan"}
           </button>
         </div>

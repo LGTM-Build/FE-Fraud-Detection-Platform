@@ -27,7 +27,7 @@ type ImportResult = {
 const TABS: { key: TabType; label: string; icon: React.ReactNode }[] = [
   {
     key: "expense",
-    label: "Expense",
+    label: "Pengeluaran",
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <line x1="12" y1="1" x2="12" y2="23" />
@@ -151,7 +151,7 @@ export function ImportDashboardModal({ isOpen, onClose, isMobile, onSuccess }: I
   const partialSuccess = result && result.successRows > 0 && result.failedRows > 0;
   const allFailed = result && result.successRows === 0 && result.failedRows > 0;
 
-  const tabLabel = activeTab === "expense" ? "Expense" : "Pengadaan";
+  const tabLabel = activeTab === "expense" ? "Pengeluaran" : "Pengadaan";
 
   return (
     <>
